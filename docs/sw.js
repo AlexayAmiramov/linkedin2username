@@ -1,6 +1,6 @@
 // Offline support: network first, cached copy when offline. Only same-origin GETs are touched,
 // so requests to Google's API never pass through or get stored in the cache.
-const CACHE = 'sbt-v4';
+const CACHE = 'sbt-v5';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

@@ -117,6 +117,11 @@ textarea::placeholder,.field::placeholder{color:#6f6656}
 .note{font-size:13px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .note.warn{color:var(--fg);border-color:var(--gold-lo)}
 .note.err{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
+.free-head{display:flex;flex-direction:column;gap:2px}
+.free-head b{color:var(--gold-hi);font-size:16px}
+.free-head span{color:var(--muted);font-size:13px}
+#id-free .btn{width:100%}
+#id-prompt-out{min-height:120px;font-size:13px;direction:ltr;text-align:left}
 .status{display:flex;align-items:center;gap:10px;color:var(--gold-hi);font-size:14px}
 .status .dot{width:18px;height:18px;border-radius:50%;border:2px solid rgba(201,162,75,.25);border-top-color:var(--gold);animation:spin .8s linear infinite;flex:none}
 .results{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
@@ -286,10 +291,18 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         </div>
       </div>
       <div class="note warn cl" id="id-claudenote" hidden>הציור נעשה עם Claude, דרך החשבון שמחובר לטלפון הזה. אם הכפתור לא עובד, צריך להתחבר ל-claude.ai באותו דפדפן ולפתוח שוב את הקישור.</div>
-      <div class="note warn" id="id-keynote" hidden>כדי לצייר עם Gemini צריך להכניס מפתח API פעם אחת. <button class="btn btn-sm btn-gold" id="id-open-settings" style="margin-top:8px">להגדרת מפתח</button></div>
+      <div class="note warn" id="id-keynote" hidden>הכפתור הזה מצייר דרך מפתח API, שהוא בתשלום. בלי מפתח, אפשר לצייר בחינם דרך אפליקציית Gemini (בתיבה למטה). <button class="btn btn-sm btn-gold" id="id-open-settings" style="margin-top:8px">להגדרת מפתח</button></div>
       <div class="row">
         <button class="btn btn-gold" id="id-go"><svg viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"/></svg>יצירת סקיצה</button>
         <button class="btn" id="id-stop" hidden>עצירה</button>
+      </div>
+      <div class="panel" id="id-free">
+        <div class="free-head"><b>בחינם, דרך אפליקציית Gemini</b><span>עם חשבון Google רגיל, בלי מפתח ובלי תשלום</span></div>
+        <a class="btn btn-gold" id="id-copy" href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer">שלב 1 · העתקת ההנחיה ופתיחת Gemini</a>
+        <p class="hint" style="text-align:start;margin:0">ב-Gemini: מדביקים בתיבה ושולחים. כשהתמונה מוכנה: לחיצה ארוכה עליה ← "שמירה בתמונות". חוזרים לכאן ולוחצים על שלב 2.</p>
+        <label class="btn" for="id-import">שלב 2 · ייבוא הסקיצה ששמרתי</label>
+        <input type="file" id="id-import" accept="image/*" hidden>
+        <textarea id="id-prompt-out" readonly hidden aria-label="ההנחיה ל-Gemini"></textarea>
       </div>
       <div class="status" id="id-status" hidden><span class="dot"></span><span id="id-status-t"></span></div>
       <div class="note err" id="id-err" hidden></div>
@@ -430,6 +443,16 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
           <li>Claude מצייר בקווים נקיים. הוא חזק בסגנונות Fine Line, מינימליסטי, גיאומטרי ואורנמנטלי, ופחות בריאליזם.</li>
           <li>בפעם הראשונה תופיע שאלה אם לאשר לעמוד להשתמש ב-Claude. לוחצים לאשר.</li>
         </ul>
+      </div>
+      <div class="sec">
+        <h3>ציור בחינם דרך אפליקציית Gemini</h3>
+        <ol class="steps">
+          <li>במסך "רעיון" כותבים רעיון, ובוחרים סגנון ומיקום.</li>
+          <li>לוחצים "שלב 1 · העתקת ההנחיה ופתיחת Gemini".</li>
+          <li>ב-Gemini מדביקים ושולחים. אפשר עם חשבון Google חינמי.</li>
+          <li>לחיצה ארוכה על התמונה שמתקבלת, ואז "שמירה בתמונות".</li>
+          <li>חוזרים לאפליקציה ולוחצים "שלב 2 · ייבוא הסקיצה ששמרתי". משם אפשר לשמור, לערוך ולהדמות על הגוף.</li>
+        </ol>
       </div>
       <div class="sec gem">
         <h3>איך מקבלים מפתח Gemini</h3>
@@ -1116,6 +1139,30 @@ function editDrawing(im) {
   ph.style = 'ink'; syncControls(); setPhotoSource(toCanvas(im, WORK), false);
   showTab('photo'); toast('נפתח לעריכה. אפשר לשנות סגנון, לנקות ולעבות קווים');
 }
+$('#id-copy').addEventListener('click', e => {
+  const text = $('#id-text').value.trim();
+  if (!text) { e.preventDefault(); $('#id-text').focus(); toast('כתבי קודם את הרעיון'); return; }
+  const ar = PLACES.find(p => p.id === idea.place).ar;
+  const prompt = buildPrompt(text, 1, 1) + `\nImage aspect ratio: ${ar} (portrait if the first number is smaller).\nGenerate the image.`;
+  const out = $('#id-prompt-out'); out.value = prompt;
+  const manual = () => { out.hidden = false; out.focus(); out.select(); toast('לא הצלחתי להעתיק. סמני את הטקסט בתיבה והעתיקי', 'err'); };
+  try {
+    navigator.clipboard.writeText(prompt).then(() => {
+      out.hidden = true;
+      toast(idea.ref ? 'הועתק. ב-Gemini הדביקי וצרפי גם את תמונת ההשראה' : 'ההנחיה הועתקה. הדביקי אותה ב-Gemini');
+    }, manual);
+  } catch { manual(); }
+});
+$('#id-import').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const im = await loadImage(f);
+    const blob = await canvasBlob(toCanvas(im, 2048));
+    addResult(blob, $('#id-text').value.trim() || 'סקיצה מ-Gemini');
+    $('#id-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    toast('הסקיצה נוספה. אפשר לשמור, לערוך או להדמות');
+  } catch { toast('לא הצלחתי לפתוח את התמונה', 'err'); }
+});
 function setBusy(on, text) {
   $('#id-go').disabled = on; $('#id-stop').hidden = !on;
   $('#id-status').hidden = !on; $('#id-status-t').textContent = text || '';
