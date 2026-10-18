@@ -121,6 +121,9 @@ textarea::placeholder,.field::placeholder{color:#6f6656}
 .free-head b{color:var(--gold-hi);font-size:16px}
 .free-head span{color:var(--muted);font-size:13px}
 #id-free .btn{width:100%}
+.free-copied{display:flex;flex-direction:column;gap:10px}
+.free-copied .note{color:var(--fg);border-color:var(--gold-lo)}
+.free-copied b{color:var(--gold-hi);font-weight:600}
 #id-prompt-out{min-height:120px;font-size:13px;direction:ltr;text-align:left}
 .status{display:flex;align-items:center;gap:10px;color:var(--gold-hi);font-size:14px}
 .status .dot{width:18px;height:18px;border-radius:50%;border:2px solid rgba(201,162,75,.25);border-top-color:var(--gold);animation:spin .8s linear infinite;flex:none}
@@ -298,11 +301,15 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
       </div>
       <div class="panel" id="id-free">
         <div class="free-head"><b>בחינם, דרך אפליקציית Gemini</b><span>עם חשבון Google רגיל, בלי מפתח ובלי תשלום</span></div>
-        <a class="btn btn-gold" id="id-copy" href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer">שלב 1 · העתקת ההנחיה ופתיחת Gemini</a>
-        <p class="hint" style="text-align:start;margin:0">ב-Gemini: מדביקים בתיבה ושולחים. כשהתמונה מוכנה: לחיצה ארוכה עליה ← "שמירה בתמונות". חוזרים לכאן ולוחצים על שלב 2.</p>
+        <button class="btn btn-gold" id="id-copy" type="button">שלב 1 · העתקת ההנחיה</button>
+        <div id="id-copied" class="free-copied" hidden>
+          <div class="note">ההנחיה הועתקה ✓ עכשיו פותחים את Gemini, <b>לוחצים לחיצה ארוכה בתיבת הכתיבה ← "הדבקה"</b>, ושולחים.</div>
+          <a class="btn" id="id-open-gemini" href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer">פתיחת Gemini ↗</a>
+        </div>
+        <textarea id="id-prompt-out" readonly hidden aria-label="ההנחיה ל-Gemini"></textarea>
+        <p class="hint" style="text-align:start;margin:0">כשהתמונה מוכנה ב-Gemini: לחיצה ארוכה עליה ← "שמירה בתמונות". חוזרים לכאן ולוחצים על שלב 2.</p>
         <label class="btn" for="id-import">שלב 2 · ייבוא הסקיצה ששמרתי</label>
         <input type="file" id="id-import" accept="image/*" hidden>
-        <textarea id="id-prompt-out" readonly hidden aria-label="ההנחיה ל-Gemini"></textarea>
       </div>
       <div class="status" id="id-status" hidden><span class="dot"></span><span id="id-status-t"></span></div>
       <div class="note err" id="id-err" hidden></div>
@@ -448,8 +455,8 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         <h3>ציור בחינם דרך אפליקציית Gemini</h3>
         <ol class="steps">
           <li>במסך "רעיון" כותבים רעיון, ובוחרים סגנון ומיקום.</li>
-          <li>לוחצים "שלב 1 · העתקת ההנחיה ופתיחת Gemini".</li>
-          <li>ב-Gemini מדביקים ושולחים. אפשר עם חשבון Google חינמי.</li>
+          <li>לוחצים "שלב 1 · העתקת ההנחיה", ואז "פתיחת Gemini".</li>
+          <li>ב-Gemini לוחצים לחיצה ארוכה בתיבת הכתיבה, בוחרים "הדבקה" ושולחים. ההנחיה לא נכנסת לבד. אפשר עם חשבון Google חינמי.</li>
           <li>לחיצה ארוכה על התמונה שמתקבלת, ואז "שמירה בתמונות".</li>
           <li>חוזרים לאפליקציה ולוחצים "שלב 2 · ייבוא הסקיצה ששמרתי". משם אפשר לשמור, לערוך ולהדמות על הגוף.</li>
         </ol>
@@ -1139,19 +1146,32 @@ function editDrawing(im) {
   ph.style = 'ink'; syncControls(); setPhotoSource(toCanvas(im, WORK), false);
   showTab('photo'); toast('נפתח לעריכה. אפשר לשנות סגנון, לנקות ולעבות קווים');
 }
-$('#id-copy').addEventListener('click', e => {
+// Copy synchronously inside the tap (works on iPhone), with the async clipboard API as a second try
+function copyText(text) {
+  const t = document.createElement('textarea');
+  t.value = text; t.setAttribute('readonly', '');
+  t.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px';
+  document.body.append(t);
+  const range = document.createRange(); range.selectNodeContents(t);
+  const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  t.setSelectionRange(0, text.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch {}
+  t.remove(); sel.removeAllRanges();
+  try { if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {}); } catch {}
+  return ok;
+}
+$('#id-copy').addEventListener('click', () => {
   const text = $('#id-text').value.trim();
-  if (!text) { e.preventDefault(); $('#id-text').focus(); toast('כתבי קודם את הרעיון'); return; }
+  if (!text) { $('#id-text').focus(); toast('כתבי קודם את הרעיון'); return; }
   const ar = PLACES.find(p => p.id === idea.place).ar;
   const prompt = buildPrompt(text, 1, 1) + `\nImage aspect ratio: ${ar} (portrait if the first number is smaller).\nGenerate the image.`;
   const out = $('#id-prompt-out'); out.value = prompt;
-  const manual = () => { out.hidden = false; out.focus(); out.select(); toast('לא הצלחתי להעתיק. סמני את הטקסט בתיבה והעתיקי', 'err'); };
-  try {
-    navigator.clipboard.writeText(prompt).then(() => {
-      out.hidden = true;
-      toast(idea.ref ? 'הועתק. ב-Gemini הדביקי וצרפי גם את תמונת ההשראה' : 'ההנחיה הועתקה. הדביקי אותה ב-Gemini');
-    }, manual);
-  } catch { manual(); }
+  const ok = copyText(prompt);
+  $('#id-copied').hidden = false;
+  out.hidden = false;
+  if (ok) toast(idea.ref ? 'הועתק. ב-Gemini הדביקי וצרפי גם את תמונת ההשראה' : 'ההנחיה הועתקה');
+  else { out.focus(); out.select(); toast('סמני את הטקסט בתיבה והעתיקי ידנית', 'err'); }
 });
 $('#id-import').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
