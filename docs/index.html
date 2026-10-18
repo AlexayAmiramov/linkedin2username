@@ -128,6 +128,8 @@ textarea::placeholder,.field::placeholder{color:#6f6656}
 .card .meta{font-size:11px;color:var(--muted);padding:6px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* Body preview */
+#id-count{grid-template-columns:repeat(3,1fr)}
+.in-claude #id-count{grid-template-columns:repeat(2,1fr)}
 #bd-canvas{touch-action:none;cursor:grab}
 .strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .strip::-webkit-scrollbar{display:none}
@@ -173,6 +175,8 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .toast.err{border-color:var(--danger)}
 
+.in-claude .gem{display:none!important}
+#app:not(.in-claude) .cl{display:none!important}
 @media (prefers-reduced-motion:reduce){.busy,.status .dot{animation-duration:2.4s}.toast{transition:none}}
 </style>
 
@@ -246,7 +250,7 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         <button class="btn" id="ph-tobody"><svg viewBox="0 0 24 24"><path d="M8 3c-1 4-1 8 0 18M16 3c1 4 1 8 0 18"/><circle cx="12" cy="11" r="2.5"/></svg>הדמיה על הגוף</button>
         <button class="btn" id="ph-toai"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/></svg>שיפור עם AI</button>
       </div>
-      <p class="hint">שיפור עם AI שולח את התמונה ל-Gemini רק כשלוחצים על "יצירת סקיצה" במסך הרעיון.</p>
+      <p class="hint">שיפור עם AI שולח את התמונה לציור רק כשלוחצים על "יצירת סקיצה" במסך הרעיון.</p>
     </section>
 
     <!-- IDEA → SKETCH -->
@@ -269,10 +273,10 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         <input type="file" id="id-ref" accept="image/*" hidden>
       </div>
       <div class="label">כמה גרסאות</div>
-      <div class="seg" id="id-count" role="radiogroup" aria-label="מספר גרסאות" style="grid-template-columns:repeat(3,1fr)">
+      <div class="seg" id="id-count" role="radiogroup" aria-label="מספר גרסאות">
         <button role="radio" data-v="1" aria-checked="false">1</button>
         <button role="radio" data-v="2" aria-checked="true">2</button>
-        <button role="radio" data-v="4" aria-checked="false">4</button>
+        <button role="radio" data-v="4" aria-checked="false" class="gem">4</button>
       </div>
       <div id="id-engine-wrap" hidden>
         <div class="label" style="margin-bottom:10px">מנוע ציור</div>
@@ -281,6 +285,7 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
           <button role="radio" data-v="claude" aria-checked="false">Claude</button>
         </div>
       </div>
+      <div class="note warn cl" id="id-claudenote" hidden>הציור נעשה עם Claude, דרך החשבון שמחובר לטלפון הזה. אם הכפתור לא עובד, צריך להתחבר ל-claude.ai באותו דפדפן ולפתוח שוב את הקישור.</div>
       <div class="note warn" id="id-keynote" hidden>כדי לצייר עם Gemini צריך להכניס מפתח API פעם אחת. <button class="btn btn-sm btn-gold" id="id-open-settings" style="margin-top:8px">להגדרת מפתח</button></div>
       <div class="row">
         <button class="btn btn-gold" id="id-go"><svg viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"/></svg>יצירת סקיצה</button>
@@ -364,7 +369,7 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
   <div class="sheet" id="settings" hidden>
     <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="st-title">
       <div class="sheet-head"><h2 id="st-title">הגדרות ואבטחה</h2><button class="icon-btn" id="st-close" aria-label="סגירה"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-      <div class="sec">
+      <div class="sec gem">
         <h3>מפתח Gemini API</h3>
         <p>יוצרים מפתח בחינם ב-Google AI Studio. הוא נשמר רק במכשיר הזה ונשלח רק לשרתי Google.</p>
         <div class="keyrow">
@@ -379,7 +384,7 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         </div>
         <div class="note" id="st-msg" hidden></div>
       </div>
-      <div class="sec">
+      <div class="sec gem">
         <h3>מודל</h3>
         <select class="field" id="st-model">
           <option value="gemini-2.5-flash-image">gemini-2.5-flash-image · מהיר וזול</option>
@@ -392,13 +397,14 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         <h3>פרטיות</h3>
         <ul>
           <li>תמונה לסקיצה והדמיה על הגוף עובדות בלי אינטרנט. שום תמונה לא יוצאת מהטלפון.</li>
-          <li>ברעיון לסקיצה נשלחים ל-Google רק הטקסט ותמונת ההשראה, אם הוספת. נתוני המיקום (GPS) נמחקים מהתמונה לפני השליחה.</li>
+          <li class="gem">ברעיון לסקיצה נשלחים ל-Google רק הטקסט ותמונת ההשראה, אם הוספת. נתוני המיקום (GPS) נמחקים מהתמונה לפני השליחה.</li>
+          <li class="cl">ברעיון לסקיצה נשלחים ל-Claude רק הטקסט ותמונת ההשראה, אם הוספת. נתוני המיקום (GPS) נמחקים מהתמונה לפני השליחה.</li>
           <li>הגלריה נשמרת רק בדפדפן של הטלפון הזה.</li>
         </ul>
       </div>
       <div class="sec">
         <h3>מחיקת נתונים</h3>
-        <button class="btn btn-danger btn-sm" id="st-wipe" style="align-self:flex-start">מחיקת המפתח וכל הגלריה</button>
+        <button class="btn btn-danger btn-sm" id="st-wipe" style="align-self:flex-start">מחיקת כל הנתונים והגלריה</button>
       </div>
     </div>
   </div>
@@ -416,7 +422,16 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         </ol>
         <p>האפליקציה נפתחת מהאייקון במסך מלא. תמונה לסקיצה, הדמיה וגלריה עובדות גם בלי אינטרנט.</p>
       </div>
-      <div class="sec">
+      <div class="sec cl">
+        <h3>ציור רעיון עם Claude</h3>
+        <ul>
+          <li>הציור נעשה דרך חשבון Claude שמחובר בטלפון, ואין צורך במפתח.</li>
+          <li>כל ציור לוקח בערך חצי דקה עד דקה, ונספר בשימוש של החשבון.</li>
+          <li>Claude מצייר בקווים נקיים. הוא חזק בסגנונות Fine Line, מינימליסטי, גיאומטרי ואורנמנטלי, ופחות בריאליזם.</li>
+          <li>בפעם הראשונה תופיע שאלה אם לאשר לעמוד להשתמש ב-Claude. לוחצים לאשר.</li>
+        </ul>
+      </div>
+      <div class="sec gem">
         <h3>איך מקבלים מפתח Gemini</h3>
         <ol class="steps">
           <li>נכנסים ל-<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com/apikey</a> עם חשבון Google.</li>
@@ -426,7 +441,7 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         </ol>
         <p>מנוי Gemini Pro לא כולל את ה-API, אלה שני דברים נפרדים. המפתח עצמו בחינם. מודל מהיר ומודל איכותי מוסברים בהמשך.</p>
       </div>
-      <div class="sec">
+      <div class="sec gem">
         <h3>מהיר או איכותי</h3>
         <ul>
           <li><b>gemini-2.5-flash-image</b>: מהיר, וכולל כמות קטנה של תמונות בחינם ביום.</li>
@@ -434,7 +449,7 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
           <li>אם מופיעה ההודעה "נגמרה המכסה", מחכים קצת או מפעילים Billing.</li>
         </ul>
       </div>
-      <div class="sec">
+      <div class="sec gem">
         <h3>שמירה על המפתח</h3>
         <ul>
           <li>לא שולחים את המפתח לאף אחד ולא מצלמים אותו.</li>
@@ -461,8 +476,9 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         <h3>פרטיות</h3>
         <ul>
           <li>תמונה לסקיצה והדמיה על הגוף מעובדות בטלפון ולא נשלחות לשום מקום.</li>
-          <li>ל-Google נשלחים רק הטקסט ותמונת ההשראה, ורק כשלוחצים על "יצירת סקיצה". נתוני GPS נמחקים לפני השליחה.</li>
-          <li>הגלריה והמפתח נשמרים רק בטלפון הזה. בהגדרות יש כפתור שמוחק הכול.</li>
+          <li class="gem">ל-Google נשלחים רק הטקסט ותמונת ההשראה, ורק כשלוחצים על "יצירת סקיצה". נתוני GPS נמחקים לפני השליחה.</li>
+          <li class="cl">ל-Claude נשלחים רק הטקסט ותמונת ההשראה, ורק כשלוחצים על "יצירת סקיצה". נתוני GPS נמחקים לפני השליחה.</li>
+          <li>הגלריה נשמרת רק בטלפון הזה. בהגדרות יש כפתור שמוחק הכול.</li>
         </ul>
       </div>
     </div>
@@ -495,9 +511,10 @@ function toast(msg, kind = '') {
 
 /* ---------- Claude viewer capabilities (only when opened inside claude.ai) ---------- */
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
+if (inViewer) document.getElementById('app').classList.add('in-claude');
 const caps = { sample: null, downloads: null };
 if (inViewer) {
-  window.claude.use('sample').then(s => { caps.sample = s; refreshEngine(); }).catch(() => {});
+  window.claude.use('sample').then(s => { caps.sample = s; }).catch(() => {}).finally(() => { caps.sampleReady = true; refreshEngine(); });
   window.claude.use('downloads').then(d => { caps.downloads = d; }).catch(() => {});
 } else if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -976,6 +993,13 @@ function renderIdeaChips() {
 $$('#id-count button').forEach(b => b.addEventListener('click', () => { idea.count = +b.dataset.v; $$('#id-count button').forEach(x => x.setAttribute('aria-checked', String(x === b))); }));
 $$('#id-engine button').forEach(b => b.addEventListener('click', () => { idea.engine = b.dataset.v; ls.set('sbt.engine', idea.engine); refreshEngine(); }));
 function refreshEngine() {
+  if (inViewer) {
+    idea.engine = 'claude';
+    if (idea.count > 2) { idea.count = 2; $$('#id-count button').forEach(x => x.setAttribute('aria-checked', String(x.dataset.v === '2'))); }
+    $('#id-engine-wrap').hidden = true; $('#id-keynote').hidden = true;
+    $('#id-claudenote').hidden = !caps.sampleReady || !!caps.sample;
+    return;
+  }
   const hasClaude = !!caps.sample;
   $('#id-engine-wrap').hidden = !hasClaude;
   if (!hasClaude) idea.engine = 'gemini';
@@ -1101,6 +1125,7 @@ $('#id-go').addEventListener('click', async () => {
   $('#id-err').hidden = true;
   if (!text) { $('#id-text').focus(); toast('כתבי קודם את הרעיון'); return; }
   if (idea.engine === 'gemini' && !getKey()) { openSettings(); return; }
+  if (idea.engine === 'claude' && !caps.sample) { $('#id-claudenote').hidden = false; toast('Claude לא זמין כרגע בעמוד הזה', 'err'); return; }
   const total = idea.engine === 'claude' ? Math.min(idea.count, 2) : idea.count;
   const aspect = PLACES.find(p => p.id === idea.place).ar;
   idea.ctl = new AbortController();
@@ -1261,7 +1286,7 @@ function openSettings() {
   const known = $$('#st-model option').some(o => o.value === m);
   $('#st-model').value = known ? m : 'custom';
   $('#st-model-custom').hidden = known; $('#st-model-custom').value = known ? '' : m;
-  $('#st-msg').hidden = true; $('#st-wipe').textContent = 'מחיקת המפתח וכל הגלריה'; wipeArmed = false;
+  $('#st-msg').hidden = true; $('#st-wipe').textContent = 'מחיקת כל הנתונים והגלריה'; wipeArmed = false;
   $('#settings').hidden = false;
 }
 function closeSettings() { $('#settings').hidden = true; refreshEngine(); }
@@ -1304,7 +1329,7 @@ $('#st-wipe').addEventListener('click', async () => {
   ['sbt.key', 'sbt.model', 'sbt.remember', 'sbt.engine', 'sbt.style', 'sbt.istyle', 'sbt.place', 'sbt.tab'].forEach(k => ls.del(k));
   idea.keyMem = ''; $('#st-key').value = '';
   await gallery.wipe(); renderGallery();
-  stMsg('כל הנתונים נמחקו מהמכשיר.'); wipeArmed = false; $('#st-wipe').textContent = 'מחיקת המפתח וכל הגלריה';
+  stMsg('כל הנתונים נמחקו מהמכשיר.'); wipeArmed = false; $('#st-wipe').textContent = 'מחיקת כל הנתונים והגלריה';
 });
 
 /* ---------- Tabs & boot ---------- */
