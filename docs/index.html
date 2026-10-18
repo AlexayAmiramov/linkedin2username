@@ -441,6 +441,7 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
           <li>מומלץ להגביל אותו ב-<a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Google Cloud Console</a>: בוחרים את המפתח ← API restrictions ← רק "Generative Language API".</li>
           <li>אם המפתח דלף, מוחקים אותו ב-AI Studio ויוצרים חדש.</li>
           <li>בטלפון משותף, מבטלים את "לזכור את המפתח במכשיר הזה".</li>
+          <li>את המפתח מכניסים פעם אחת, מתוך האייקון במסך הבית. ל-Safari ולאייקון יש זיכרון נפרד, ומהאייקון המפתח לא נמחק גם אם לא נכנסים כמה ימים.</li>
         </ul>
       </div>
       <div class="sec">
@@ -1284,6 +1285,8 @@ function saveKey() {
   ls.set('sbt.remember', remember ? '1' : '0');
   idea.keyMem = k;
   if (remember && k) ls.set('sbt.key', k); else ls.del('sbt.key');
+  // Ask the browser to keep this site's storage, so the key and gallery are not cleared automatically
+  if (remember && k && navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
   return k;
 }
 $('#st-save').addEventListener('click', () => { const k = saveKey(); stMsg(k ? 'נשמר. אפשר לחזור ולצייר.' : 'המפתח נמחק.'); refreshEngine(); });
