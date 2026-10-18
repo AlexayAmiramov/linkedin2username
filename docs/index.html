@@ -1,0 +1,1225 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://generativelanguage.googleapis.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0c0b09">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Shaked Tattoo">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Shaked Berkovich Tattoo</title>
+<style id="standalone">html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<style>
+/* Layout: one-column studio tool on warm black; gold reserved for brand, primary actions and the active state; fixed tab bar at the thumb. */
+:root{
+  --ink:#0c0b09;
+  --panel:#16130f;
+  --panel-2:#1f1b15;
+  --line:#2f291f;
+  --gold:#c9a24b;
+  --gold-hi:#ecd391;
+  --gold-lo:#8a6a28;
+  --fg:#f1e9d8;
+  --muted:#a2977f;
+  --danger:#e48a74;
+  --paper:#fbf8f2;
+  --f-display:"Didot","Bodoni 72","Bodoni MT","Playfair Display",Georgia,"Times New Roman",serif;
+  --f-body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI","Arial Hebrew",Arial,sans-serif;
+  --r:16px;
+  --tabh:62px;
+  color-scheme:dark;
+}
+html,body{background:var(--ink);color:var(--fg)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+#app{min-height:100%;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 28px);max-width:640px;margin:0 auto;box-sizing:border-box}
+#app *,#app *::before,#app *::after{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
+
+/* Brand header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 10px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.mono{width:46px;height:46px;flex:none}
+.word{display:flex;flex-direction:column;min-width:0;direction:ltr;text-align:left}
+.word .name{font-family:var(--f-display);font-size:19px;letter-spacing:.16em;line-height:1.1;white-space:nowrap;background:linear-gradient(180deg,var(--gold-hi),var(--gold) 55%,var(--gold-lo));-webkit-background-clip:text;background-clip:text;color:transparent}
+.word .sub{font-size:10px;letter-spacing:.42em;color:var(--muted);margin-top:4px;white-space:nowrap}
+.icon-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;cursor:pointer;flex:none}
+.icon-btn svg{width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.6}
+
+/* Views */
+.view{display:flex;flex-direction:column;gap:16px;padding-top:18px}
+.view-head h1{font-size:24px;font-weight:700;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.view-head p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.lock{display:inline-flex;align-items:center;gap:6px}
+.lock svg{width:13px;height:13px;stroke:var(--gold);fill:none;stroke-width:2;flex:none}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-weight:600;font-size:15px;cursor:pointer;user-select:none;-webkit-user-select:none;text-decoration:none;color:var(--fg)}
+.btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;flex:none}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.btn-gold{background:linear-gradient(180deg,var(--gold-hi),var(--gold) 60%,var(--gold-lo));color:#1a1408;border-color:transparent}
+.btn-ghost{background:transparent}
+.btn-danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent);background:transparent}
+.btn-sm{min-height:38px;padding:0 14px;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+.row>.btn{flex:1 1 140px}
+
+/* Work surface */
+.stage{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:var(--paper);touch-action:manipulation}
+.stage.checker{background-color:#fff;background-image:linear-gradient(45deg,#e9e4da 25%,transparent 25%),linear-gradient(-45deg,#e9e4da 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e9e4da 75%),linear-gradient(-45deg,transparent 75%,#e9e4da 75%);background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0}
+.stage canvas{display:block;width:100%;height:auto;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+.stage .over{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--paper)}
+.tag{position:absolute;top:10px;inset-inline-start:10px;background:rgba(12,11,9,.78);color:var(--gold-hi);font-size:12px;padding:4px 10px;border-radius:999px;letter-spacing:.02em}
+.hint{font-size:12px;color:var(--muted);text-align:center}
+.busy{position:absolute;inset-inline-end:10px;top:10px;width:26px;height:26px;border-radius:50%;border:2px solid rgba(201,162,75,.25);border-top-color:var(--gold);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.seg button{border:0;background:transparent;border-radius:10px;min-height:42px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;padding:0 4px}
+.seg button[aria-checked="true"]{background:var(--panel-2);color:var(--gold-hi);box-shadow:inset 0 0 0 1px var(--gold-lo)}
+.seg.two{grid-template-columns:repeat(2,1fr)}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:14px}
+.ctl{display:flex;flex-direction:column;gap:6px}
+.ctl label{display:flex;justify-content:space-between;font-size:14px;color:var(--fg)}
+.ctl output{color:var(--gold);font-variant-numeric:tabular-nums;font-size:13px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:3px;background:linear-gradient(90deg,var(--gold-lo),var(--line))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;margin-top:-10.5px;background:radial-gradient(circle at 35% 35%,var(--gold-hi),var(--gold) 60%,var(--gold-lo));border:2px solid var(--ink);box-shadow:0 0 0 1px var(--gold-lo)}
+input[type=range]::-moz-range-track{height:3px;background:var(--line)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--gold);border:2px solid var(--ink)}
+
+.toggles{display:flex;flex-wrap:wrap;gap:8px}
+.tog{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;font-size:14px;cursor:pointer;background:var(--panel)}
+.tog input{appearance:none;-webkit-appearance:none;width:18px;height:18px;border-radius:5px;border:1.5px solid var(--gold-lo);margin:0;display:grid;place-items:center;flex:none}
+.tog input:checked{background:var(--gold);border-color:var(--gold)}
+.tog input:checked::after{content:"";width:5px;height:9px;border:solid #1a1408;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+
+/* Idea */
+textarea,.field{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:16px;color:var(--fg)}
+textarea{min-height:104px;resize:vertical;line-height:1.5}
+textarea::placeholder,.field::placeholder{color:#6f6656}
+.label{font-size:13px;color:var(--muted);letter-spacing:.02em;margin-bottom:-6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 13px;font-size:14px;cursor:pointer;color:var(--fg)}
+.chip[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-hi);background:var(--panel-2)}
+.chip.ex{color:var(--muted);border-style:dashed}
+.ref{display:flex;align-items:center;gap:12px}
+.ref img{width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.note{font-size:13px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.note.warn{color:var(--fg);border-color:var(--gold-lo)}
+.note.err{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
+.status{display:flex;align-items:center;gap:10px;color:var(--gold-hi);font-size:14px}
+.status .dot{width:18px;height:18px;border-radius:50%;border:2px solid rgba(201,162,75,.25);border-top-color:var(--gold);animation:spin .8s linear infinite;flex:none}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.card img{display:block;width:100%;aspect-ratio:3/4;object-fit:contain;background:var(--paper);cursor:zoom-in}
+.card .acts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-top:1px solid var(--line)}
+.card .acts button{border:0;background:var(--panel);min-height:40px;font-size:13px;cursor:pointer;color:var(--fg)}
+.card .acts button.g{color:var(--gold-hi)}
+.card .meta{font-size:11px;color:var(--muted);padding:6px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Body preview */
+#bd-canvas{touch-action:none;cursor:grab}
+.strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip button{flex:none;width:68px;height:68px;border-radius:12px;border:1px solid var(--line);background:var(--paper);padding:0;overflow:hidden;cursor:pointer}
+.strip button[aria-pressed="true"]{border:2px solid var(--gold)}
+.strip img{width:100%;height:100%;object-fit:contain}
+
+/* Gallery */
+.empty{border:1px dashed var(--gold-lo);border-radius:var(--r);padding:28px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--fg);font-size:16px;margin-bottom:6px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.gal button{padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper);cursor:pointer;aspect-ratio:3/4}
+.gal img{width:100%;height:100%;object-fit:contain;display:block}
+
+/* Sheets */
+.sheet{position:fixed;inset:0;z-index:40;background:rgba(5,4,3,.82);display:flex;align-items:flex-end;justify-content:center;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.sheet-in{width:100%;max-width:640px;max-height:92%;overflow:auto;background:var(--ink);border-top:1px solid var(--gold-lo);border-radius:22px 22px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sheet-head h2{margin:0;font-size:19px}
+.viewer-img{width:100%;max-height:58vh;object-fit:contain;background:var(--paper);border-radius:14px}
+.keyrow{display:flex;gap:8px}
+.keyrow .field{flex:1;min-width:0;direction:ltr;text-align:left}
+.sec{display:flex;flex-direction:column;gap:10px;padding-block:6px}
+.sec h3{margin:0;font-size:15px;color:var(--gold-hi);font-weight:600}
+.sec p,.sec li{margin:0;font-size:14px;color:var(--muted)}
+.sec ul{margin:0;padding-inline-start:18px;display:flex;flex-direction:column;gap:4px}
+.sec a{color:var(--gold-hi)}
+select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:left}
+
+/* Tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(12,11,9,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:6px max(10px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+.tabs-in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.tab{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;color:var(--muted);font-size:11px;cursor:pointer;min-height:50px}
+.tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.5}
+.tab[aria-current="page"]{color:var(--gold-hi)}
+.tab[aria-current="page"] svg{filter:drop-shadow(0 0 6px rgba(201,162,75,.35))}
+
+.toast{position:fixed;left:50%;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 18px);transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--panel-2);border:1px solid var(--gold-lo);color:var(--fg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:50;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.err{border-color:var(--danger)}
+
+@media (prefers-reduced-motion:reduce){.busy,.status .dot{animation-duration:2.4s}.toast{transition:none}}
+</style>
+
+<div id="app" dir="rtl" lang="he">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="goldg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ecd391"/><stop offset=".55" stop-color="#c9a24b"/><stop offset="1" stop-color="#8a6a28"/></linearGradient>
+    </defs>
+  </svg>
+
+  <header class="top">
+    <div class="brand">
+      <svg class="mono" viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="30" fill="none" stroke="url(#goldg)" stroke-width="1.2"/>
+        <circle cx="32" cy="32" r="26.5" fill="none" stroke="url(#goldg)" stroke-width=".5"/>
+        <path d="M32 1.5l2 2-2 2-2-2zM32 58.5l2 2-2 2-2-2z" fill="url(#goldg)"/>
+        <text x="32" y="40.5" text-anchor="middle" font-family="Didot,'Bodoni 72',Georgia,serif" font-size="23" letter-spacing="1" fill="url(#goldg)">SB</text>
+      </svg>
+      <div class="word"><span class="name">SHAKED BERKOVICH</span><span class="sub">TATTOO · SKETCH STUDIO</span></div>
+    </div>
+    <button class="icon-btn" id="btn-settings" aria-label="הגדרות">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </header>
+
+  <main>
+    <!-- PHOTO → SKETCH -->
+    <section id="v-photo" class="view">
+      <div class="view-head">
+        <h1>תמונה לסקיצה</h1>
+        <p class="lock"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>העיבוד קורה בטלפון בלבד. התמונה לא נשלחת לשום מקום.</p>
+      </div>
+      <div class="row">
+        <label class="btn btn-gold" for="in-camera"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>צילום</label>
+        <label class="btn" for="in-photo"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>בחירה מהגלריה</label>
+        <input type="file" id="in-camera" accept="image/*" capture="environment" hidden>
+        <input type="file" id="in-photo" accept="image/*" hidden>
+      </div>
+      <div class="stage" id="ph-stage">
+        <canvas id="ph-canvas" width="10" height="10" aria-label="הסקיצה"></canvas>
+        <canvas id="ph-orig" class="over" hidden aria-hidden="true"></canvas>
+        <span class="tag" id="ph-tag">תמונה לדוגמה</span>
+        <div class="busy" id="ph-busy" hidden></div>
+      </div>
+      <p class="hint">החזיקי את האצבע על הסקיצה כדי לראות את התמונה המקורית</p>
+      <div class="seg" id="ph-style" role="radiogroup" aria-label="סגנון">
+        <button role="radio" data-v="pencil" aria-checked="false">עיפרון</button>
+        <button role="radio" data-v="line" aria-checked="true">קו נקי</button>
+        <button role="radio" data-v="stencil" aria-checked="false">סטנסיל</button>
+        <button role="radio" data-v="dot" aria-checked="false">דוטוורק</button>
+      </div>
+      <div class="panel">
+        <div class="ctl" data-for="pencil line stencil dot"><label for="ph-detail">רמת פירוט <output id="o-detail"></output></label><input type="range" id="ph-detail" min="1" max="10" step="1" value="6"></div>
+        <div class="ctl" data-for="pencil line stencil dot"><label for="ph-strength">עוצמת קו <output id="o-strength"></output></label><input type="range" id="ph-strength" min="1" max="10" step="1" value="5"></div>
+        <div class="ctl" data-for="pencil dot"><label for="ph-contrast">ניגודיות <output id="o-contrast"></output></label><input type="range" id="ph-contrast" min="-5" max="5" step="1" value="0"></div>
+        <div class="ctl" data-for="line stencil dot"><label for="ph-clean">ניקוי רעשים <output id="o-clean"></output></label><input type="range" id="ph-clean" min="0" max="10" step="1" value="4"></div>
+        <div class="ctl" data-for="line stencil dot"><label for="ph-thick"><span id="l-thick">עובי קו</span> <output id="o-thick"></output></label><input type="range" id="ph-thick" min="0" max="4" step="1" value="1"></div>
+      </div>
+      <div class="toggles">
+        <label class="tog"><input type="checkbox" id="ph-mirror">היפוך מראה</label>
+        <label class="tog"><input type="checkbox" id="ph-alpha">רקע שקוף (PNG)</label>
+      </div>
+      <div class="row">
+        <button class="btn btn-gold" id="ph-save"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>שמירה לגלריה</button>
+        <button class="btn" id="ph-export"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/></svg>שמירה לטלפון</button>
+        <button class="btn" id="ph-tobody"><svg viewBox="0 0 24 24"><path d="M8 3c-1 4-1 8 0 18M16 3c1 4 1 8 0 18"/><circle cx="12" cy="11" r="2.5"/></svg>הדמיה על הגוף</button>
+      </div>
+    </section>
+
+    <!-- IDEA → SKETCH -->
+    <section id="v-idea" class="view" hidden>
+      <div class="view-head">
+        <h1>רעיון לסקיצה</h1>
+        <p>כתבי את הרעיון במילים שלך, והבינה המלאכותית תצייר סקיצה בקו שחור, מוכנה לסטנסיל.</p>
+      </div>
+      <textarea id="id-text" maxlength="600" placeholder="לדוגמה: גל ים שמתפרק לתווי מוזיקה, קו עדין, ירח קטן ברקע"></textarea>
+      <div class="chips" id="id-examples"></div>
+      <div class="label">סגנון</div>
+      <div class="chips" id="id-styles"></div>
+      <div class="label">מיקום על הגוף</div>
+      <div class="chips" id="id-places"></div>
+      <div class="label">תמונת השראה (לא חובה)</div>
+      <div class="ref">
+        <img id="id-ref-img" alt="תמונת השראה" hidden>
+        <label class="btn btn-sm" for="id-ref"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span id="id-ref-l">הוספת תמונה</span></label>
+        <button class="btn btn-sm btn-ghost" id="id-ref-x" hidden>הסרה</button>
+        <input type="file" id="id-ref" accept="image/*" hidden>
+      </div>
+      <div class="label">כמה גרסאות</div>
+      <div class="seg" id="id-count" role="radiogroup" aria-label="מספר גרסאות" style="grid-template-columns:repeat(3,1fr)">
+        <button role="radio" data-v="1" aria-checked="false">1</button>
+        <button role="radio" data-v="2" aria-checked="true">2</button>
+        <button role="radio" data-v="4" aria-checked="false">4</button>
+      </div>
+      <div id="id-engine-wrap" hidden>
+        <div class="label" style="margin-bottom:10px">מנוע ציור</div>
+        <div class="seg two" id="id-engine" role="radiogroup" aria-label="מנוע">
+          <button role="radio" data-v="gemini" aria-checked="true">Gemini</button>
+          <button role="radio" data-v="claude" aria-checked="false">Claude</button>
+        </div>
+      </div>
+      <div class="note warn" id="id-keynote" hidden>כדי לצייר עם Gemini צריך להכניס מפתח API פעם אחת. <button class="btn btn-sm btn-gold" id="id-open-settings" style="margin-top:8px">להגדרת מפתח</button></div>
+      <div class="row">
+        <button class="btn btn-gold" id="id-go"><svg viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"/></svg>יצירת סקיצה</button>
+        <button class="btn" id="id-stop" hidden>עצירה</button>
+      </div>
+      <div class="status" id="id-status" hidden><span class="dot"></span><span id="id-status-t"></span></div>
+      <div class="note err" id="id-err" hidden></div>
+      <div class="results" id="id-results"></div>
+    </section>
+
+    <!-- BODY PREVIEW -->
+    <section id="v-body" class="view" hidden>
+      <div class="view-head">
+        <h1>הדמיה על הגוף</h1>
+        <p>גוררים עם אצבע אחת. מגדילים ומסובבים עם שתיים.</p>
+      </div>
+      <div class="row">
+        <label class="btn btn-gold" for="bd-cam"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>צילום הגוף</label>
+        <label class="btn" for="bd-file"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>מהגלריה</label>
+        <input type="file" id="bd-cam" accept="image/*" capture="environment" hidden>
+        <input type="file" id="bd-file" accept="image/*" hidden>
+      </div>
+      <div class="stage" style="background:#111">
+        <canvas id="bd-canvas" width="10" height="10" aria-label="הדמיה"></canvas>
+        <span class="tag" id="bd-tag">הדמיה לדוגמה</span>
+      </div>
+      <div class="label">איזו סקיצה</div>
+      <div class="strip" id="bd-strip"></div>
+      <div class="panel">
+        <div class="ctl"><label for="bd-size">גודל <output id="o-size"></output></label><input type="range" id="bd-size" min="5" max="150" value="42"></div>
+        <div class="ctl"><label for="bd-rot">סיבוב <output id="o-rot"></output></label><input type="range" id="bd-rot" min="-180" max="180" value="0"></div>
+        <div class="ctl"><label for="bd-op">שקיפות דיו <output id="o-op"></output></label><input type="range" id="bd-op" min="20" max="100" value="88"></div>
+      </div>
+      <div class="toggles">
+        <label class="tog"><input type="checkbox" id="bd-mirror">היפוך מראה</label>
+        <label class="tog"><input type="checkbox" id="bd-healed" checked>מראה דיו מחלים</label>
+      </div>
+      <div class="row">
+        <button class="btn btn-gold" id="bd-save"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>שמירה לגלריה</button>
+        <button class="btn" id="bd-export"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/></svg>שליחה ללקוח</button>
+      </div>
+    </section>
+
+    <!-- GALLERY -->
+    <section id="v-gallery" class="view" hidden>
+      <div class="view-head">
+        <h1>הגלריה שלי</h1>
+        <p class="lock"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>נשמרת רק בטלפון הזה.</p>
+      </div>
+      <div class="empty" id="gal-empty"><b>עוד אין כאן סקיצות</b>כל סקיצה שתשמרי מהמסכים האחרים תופיע כאן.</div>
+      <div class="gal" id="gal-grid"></div>
+    </section>
+  </main>
+
+  <nav class="tabs" aria-label="ניווט">
+    <div class="tabs-in">
+      <button class="tab" data-tab="photo" aria-current="page"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15c2-3 3-5 5-5s2 3 5 3"/></svg>תמונה</button>
+      <button class="tab" data-tab="idea"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>רעיון</button>
+      <button class="tab" data-tab="body"><svg viewBox="0 0 24 24"><path d="M9 3c-1.5 5-1.5 11 0 18M15 3c1.5 5 1.5 11 0 18"/><path d="M10.5 10l1.5 1.5 1.5-1.5-1.5-1.5z"/></svg>הדמיה</button>
+      <button class="tab" data-tab="gallery"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>גלריה</button>
+    </div>
+  </nav>
+
+  <!-- Viewer sheet -->
+  <div class="sheet" id="viewer" hidden>
+    <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="vw-title">
+      <div class="sheet-head"><h2 id="vw-title">סקיצה</h2><button class="icon-btn" id="vw-close" aria-label="סגירה"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <img class="viewer-img" id="vw-img" alt="סקיצה">
+      <p class="hint" id="vw-hint">לשמירה בתמונות: לחיצה ארוכה על התמונה ואז "הוספה לתמונות"</p>
+      <div class="row" id="vw-acts">
+        <button class="btn btn-gold" id="vw-export">שמירה לטלפון</button>
+        <button class="btn" id="vw-body">הדמיה על הגוף</button>
+        <button class="btn" id="vw-stencil">המרה לסטנסיל</button>
+        <button class="btn btn-danger" id="vw-del">מחיקה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings sheet -->
+  <div class="sheet" id="settings" hidden>
+    <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="st-title">
+      <div class="sheet-head"><h2 id="st-title">הגדרות ואבטחה</h2><button class="icon-btn" id="st-close" aria-label="סגירה"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="sec">
+        <h3>מפתח Gemini API</h3>
+        <p>יוצרים מפתח בחינם ב-Google AI Studio. הוא נשמר רק במכשיר הזה ונשלח רק לשרתי Google.</p>
+        <div class="keyrow">
+          <input class="field" id="st-key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="AIza…" aria-label="מפתח API">
+          <button class="btn btn-sm" id="st-show">הצגה</button>
+        </div>
+        <label class="tog" style="align-self:flex-start"><input type="checkbox" id="st-remember" checked>לזכור את המפתח במכשיר הזה</label>
+        <div class="row">
+          <button class="btn btn-gold btn-sm" id="st-save">שמירה</button>
+          <button class="btn btn-sm" id="st-test">בדיקת מפתח</button>
+          <a class="btn btn-sm btn-ghost" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">ליצירת מפתח ↗</a>
+        </div>
+        <div class="note" id="st-msg" hidden></div>
+      </div>
+      <div class="sec">
+        <h3>מודל</h3>
+        <select class="field" id="st-model">
+          <option value="gemini-2.5-flash-image">gemini-2.5-flash-image · מהיר וזול</option>
+          <option value="gemini-3-pro-image-preview">gemini-3-pro-image-preview · איכות גבוהה</option>
+          <option value="custom">שם מודל אחר…</option>
+        </select>
+        <input class="field" id="st-model-custom" placeholder="model name" hidden style="direction:ltr;text-align:left">
+      </div>
+      <div class="sec">
+        <h3>פרטיות</h3>
+        <ul>
+          <li>תמונה לסקיצה והדמיה על הגוף עובדות בלי אינטרנט. שום תמונה לא יוצאת מהטלפון.</li>
+          <li>ברעיון לסקיצה נשלחים ל-Google רק הטקסט ותמונת ההשראה, אם הוספת. נתוני המיקום (GPS) נמחקים מהתמונה לפני השליחה.</li>
+          <li>הגלריה נשמרת רק בדפדפן של הטלפון הזה.</li>
+        </ul>
+      </div>
+      <div class="sec">
+        <h3>מחיקת נתונים</h3>
+        <button class="btn btn-danger btn-sm" id="st-wipe" style="align-self:flex-start">מחיקת המפתח וכל הגלריה</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+const ls = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+
+let toastTimer;
+function toast(msg, kind = '') {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + kind;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 2800);
+}
+
+/* ---------- Claude viewer capabilities (only when opened inside claude.ai) ---------- */
+const inViewer = !!(window.claude && typeof window.claude.use === 'function');
+const caps = { sample: null, downloads: null };
+if (inViewer) {
+  window.claude.use('sample').then(s => { caps.sample = s; refreshEngine(); }).catch(() => {});
+  window.claude.use('downloads').then(d => { caps.downloads = d; }).catch(() => {});
+} else if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+/* ---------- Image helpers ---------- */
+function loadImage(blob) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(blob);
+    const im = new Image();
+    im.onload = () => { res(im); URL.revokeObjectURL(url); };
+    im.onerror = () => { URL.revokeObjectURL(url); rej(new Error('decode')); };
+    im.src = url;
+  });
+}
+function toCanvas(src, max) {
+  const sw = src.naturalWidth || src.width, sh = src.naturalHeight || src.height;
+  const k = Math.min(1, max / Math.max(sw, sh));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(sw * k)); c.height = Math.max(1, Math.round(sh * k));
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  x.drawImage(src, 0, 0, c.width, c.height);
+  return c;
+}
+const canvasBlob = (c, type = 'image/png', q) => new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('blob')), type, q));
+function blobToB64(blob) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(',')[1]);
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+function b64ToBlob(b64, type) {
+  const bin = atob(b64); const u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return new Blob([u], { type });
+}
+const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+
+/* ---------- Blur / filters (all local) ---------- */
+function boxesForGauss(sigma, n) {
+  let wl = Math.floor(Math.sqrt(12 * sigma * sigma / n + 1)); if (wl % 2 === 0) wl--;
+  const wu = wl + 2;
+  const m = Math.round((12 * sigma * sigma - n * wl * wl - 4 * n * wl - 3 * n) / (-4 * wl - 4));
+  const out = []; for (let i = 0; i < n; i++) out.push(i < m ? wl : wu); return out;
+}
+function boxH(src, dst, w, h, r) {
+  const inv = 1 / (2 * r + 1);
+  for (let y = 0; y < h; y++) {
+    const row = y * w; let acc = 0;
+    for (let k = -r; k <= r; k++) acc += src[row + clamp(k, 0, w - 1)];
+    for (let x = 0; x < w; x++) {
+      dst[row + x] = acc * inv;
+      acc += src[row + Math.min(x + r + 1, w - 1)] - src[row + Math.max(x - r, 0)];
+    }
+  }
+}
+function boxV(src, dst, w, h, r) {
+  const inv = 1 / (2 * r + 1);
+  for (let x = 0; x < w; x++) {
+    let acc = 0;
+    for (let k = -r; k <= r; k++) acc += src[clamp(k, 0, h - 1) * w + x];
+    for (let y = 0; y < h; y++) {
+      dst[y * w + x] = acc * inv;
+      acc += src[Math.min(y + r + 1, h - 1) * w + x] - src[Math.max(y - r, 0) * w + x];
+    }
+  }
+}
+function tapBlur(src, w, h, sigma) {
+  const a = Math.min(0.33, sigma * sigma / 2), c = 1 - 2 * a;
+  const t = new Float32Array(src.length), o = new Float32Array(src.length);
+  for (let y = 0; y < h; y++) { const r = y * w; for (let x = 0; x < w; x++) t[r + x] = c * src[r + x] + a * (src[r + Math.max(x - 1, 0)] + src[r + Math.min(x + 1, w - 1)]); }
+  for (let y = 0; y < h; y++) { const u = Math.max(y - 1, 0) * w, d = Math.min(y + 1, h - 1) * w, r = y * w; for (let x = 0; x < w; x++) o[r + x] = c * t[r + x] + a * (t[u + x] + t[d + x]); }
+  return o;
+}
+function gauss(src, w, h, sigma) {
+  if (sigma < 0.15) return src.slice();
+  if (sigma < 0.85) return tapBlur(src, w, h, sigma);
+  const a = src.slice(), b = new Float32Array(src.length);
+  for (const s of boxesForGauss(sigma, 3)) { const r = (s - 1) >> 1; if (r < 1) continue; boxH(a, b, w, h, r); boxV(b, a, w, h, r); }
+  return a;
+}
+function dilate(src, w, h, r) {
+  if (r < 1) return src;
+  const t = new Float32Array(src.length), o = new Float32Array(src.length);
+  for (let y = 0; y < h; y++) { const row = y * w; for (let x = 0; x < w; x++) { let m = 0; const a = Math.max(0, x - r), b = Math.min(w - 1, x + r); for (let k = a; k <= b; k++) { const v = src[row + k]; if (v > m) m = v; } t[row + x] = m; } }
+  for (let x = 0; x < w; x++) { for (let y = 0; y < h; y++) { let m = 0; const a = Math.max(0, y - r), b = Math.min(h - 1, y + r); for (let k = a; k <= b; k++) { const v = t[k * w + x]; if (v > m) m = v; } o[y * w + x] = m; } }
+  return o;
+}
+function removeSpecks(ink, w, h, minArea) {
+  if (minArea < 2) return;
+  const n = w * h, seen = new Uint8Array(n), stack = new Int32Array(n), comp = new Int32Array(n);
+  for (let i = 0; i < n; i++) {
+    if (seen[i] || ink[i] < 0.3) continue;
+    let sp = 0, cn = 0; stack[sp++] = i; seen[i] = 1;
+    while (sp) {
+      const p = stack[--sp]; comp[cn++] = p;
+      const x = p % w, y = (p - x) / w;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = y + dy; if (yy < 0 || yy >= h) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx; if (xx < 0 || xx >= w) continue;
+          const q = yy * w + xx;
+          if (!seen[q] && ink[q] >= 0.3) { seen[q] = 1; stack[sp++] = q; }
+        }
+      }
+    }
+    if (cn < minArea) for (let k = 0; k < cn; k++) ink[comp[k]] = 0;
+  }
+  for (let i = 0; i < n; i++) if (ink[i] < 0.3) ink[i] *= 0.4;
+}
+const smooth = t => t * t * (3 - 2 * t);
+
+/* ---------- Sketch styles ---------- */
+function applyContrast(lum, c) {
+  const k = Math.pow(1.45, c), out = new Float32Array(lum.length);
+  for (let i = 0; i < lum.length; i++) out[i] = clamp01((lum[i] - 0.5) * k + 0.5);
+  return out;
+}
+function lineInk(g, w, h, s, P, hard) {
+  const sigma = Math.max(0.45, (3.3 - P.detail * 0.29) * s);
+  const g1 = gauss(g, w, h, sigma), g2 = gauss(g, w, h, sigma * 1.6);
+  const gain = 7 + P.strength * 6.5;
+  const n = g.length; let ink = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const d = (g2[i] - g1[i]) * gain;
+    ink[i] = d <= 0.08 ? 0 : d >= 0.62 ? 1 : smooth((d - 0.08) / 0.54);
+  }
+  if (P.clean > 0) removeSpecks(ink, w, h, Math.round(P.clean * P.clean * 2.4 * s * s));
+  if (P.thick > 0) ink = dilate(ink, w, h, Math.round(P.thick * s));
+  if (hard) {
+    const a = gauss(ink, w, h, 0.8 * s);
+    for (let i = 0; i < n; i++) ink[i] = smooth(clamp01((a[i] - 0.34) / 0.14));
+  }
+  return ink;
+}
+function pencilLight(g, w, h, s, P) {
+  const n = g.length, inv = new Float32Array(n);
+  for (let i = 0; i < n; i++) inv[i] = 1 - g[i];
+  const b = gauss(inv, w, h, (2 + (10 - P.detail) * 1.5) * s);
+  const gamma = 0.7 + P.strength * 0.32, out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    let v = g[i] / Math.max(0.004, 1 - b[i]); if (v > 1) v = 1;
+    out[i] = Math.pow(v, gamma);
+  }
+  return out;
+}
+function dotInk(g, w, h, s, P) {
+  const step = Math.max(2, Math.round((2.5 + P.thick) * s));
+  const cw = Math.ceil(w / step), ch = Math.ceil(h / step);
+  const gb = gauss(g, w, h, step * 0.5);
+  const tone = new Float32Array(cw * ch);
+  for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
+    const x = Math.min(w - 1, cx * step + (step >> 1)), y = Math.min(h - 1, cy * step + (step >> 1));
+    tone[cy * cw + cx] = Math.pow(clamp01((1 - gb[y * w + x] - 0.18) / 0.8), 1.15);
+  }
+  const dots = new Uint8Array(cw * ch);
+  for (let cy = 0; cy < ch; cy++) {
+    const ltr = (cy & 1) === 0, dir = ltr ? 1 : -1;
+    for (let k = 0; k < cw; k++) {
+      const cx = ltr ? k : cw - 1 - k, i = cy * cw + cx;
+      const old = tone[i], nv = old > 0.5 ? 1 : 0; dots[i] = nv;
+      const e = old - nv;
+      if (cx + dir >= 0 && cx + dir < cw) tone[i + dir] += e * 7 / 16;
+      if (cy + 1 < ch) {
+        if (cx - dir >= 0 && cx - dir < cw) tone[i + cw - dir] += e * 3 / 16;
+        tone[i + cw] += e * 5 / 16;
+        if (cx + dir >= 0 && cx + dir < cw) tone[i + cw + dir] += e * 1 / 16;
+      }
+    }
+  }
+  const ink = new Float32Array(w * h), rad = step * 0.44, R = Math.ceil(rad + 1);
+  for (let cy = 0; cy < ch; cy++) for (let cx = 0; cx < cw; cx++) {
+    if (!dots[cy * cw + cx]) continue;
+    const ox = cx * step + step / 2, oy = cy * step + step / 2;
+    for (let y = Math.max(0, Math.floor(oy - R)); y < Math.min(h, oy + R); y++) {
+      for (let x = Math.max(0, Math.floor(ox - R)); x < Math.min(w, ox + R); x++) {
+        const a = clamp01(rad + 0.5 - Math.hypot(x + 0.5 - ox, y + 0.5 - oy));
+        const q = y * w + x; if (a > ink[q]) ink[q] = a;
+      }
+    }
+  }
+  const lines = lineInk(g, w, h, s, { ...P, thick: 0, clean: Math.max(P.clean, 3) }, false);
+  for (let i = 0; i < ink.length; i++) if (lines[i] > ink[i]) ink[i] = lines[i];
+  return ink;
+}
+
+/* ---------- Photo → sketch ---------- */
+const ph = { src: null, lum: null, w: 0, h: 0, style: ls.get('sbt.style') || 'line', isSample: true, label: '' };
+const WORK = 1500;
+function params() {
+  return {
+    detail: +$('#ph-detail').value, strength: +$('#ph-strength').value, contrast: +$('#ph-contrast').value,
+    clean: +$('#ph-clean').value, thick: +$('#ph-thick').value,
+    mirror: $('#ph-mirror').checked, alpha: $('#ph-alpha').checked,
+  };
+}
+function setPhotoSource(canvas, isSample) {
+  ph.src = canvas; ph.w = canvas.width; ph.h = canvas.height; ph.isSample = isSample;
+  const d = canvas.getContext('2d').getImageData(0, 0, ph.w, ph.h).data;
+  const n = ph.w * ph.h, lum = new Float32Array(n);
+  for (let i = 0, o = 0; i < n; i++, o += 4) {
+    const a = d[o + 3] / 255;
+    lum[i] = ((0.299 * d[o] + 0.587 * d[o + 1] + 0.114 * d[o + 2]) / 255) * a + (1 - a);
+  }
+  ph.lum = lum;
+  $('#ph-tag').hidden = !isSample;
+  const oc = $('#ph-orig'); oc.width = ph.w; oc.height = ph.h; oc.getContext('2d').drawImage(canvas, 0, 0);
+  queueRender();
+}
+function renderSketch() {
+  if (!ph.lum) return;
+  const { w, h } = ph, P = params(), s = Math.max(w, h) / 1200;
+  const g = applyContrast(ph.lum, ph.style === 'pencil' || ph.style === 'dot' ? P.contrast : 0);
+  let ink = null, light = null;
+  if (ph.style === 'pencil') light = pencilLight(g, w, h, s, P);
+  else if (ph.style === 'dot') ink = dotInk(g, w, h, s, P);
+  else ink = lineInk(g, w, h, s, P, ph.style === 'stencil');
+  const c = $('#ph-canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d'), id = ctx.createImageData(w, h), d = id.data;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const si = y * w + (P.mirror ? w - 1 - x : x);
+      const v = ink ? 1 - ink[si] : light[si], o = (y * w + x) * 4;
+      if (P.alpha) { d[o] = d[o + 1] = d[o + 2] = 14; d[o + 3] = (1 - v) * 255; }
+      else { const c8 = v * 255; d[o] = c8; d[o + 1] = c8; d[o + 2] = c8; d[o + 3] = 255; }
+    }
+  }
+  ctx.putImageData(id, 0, 0);
+  $('#ph-stage').classList.toggle('checker', P.alpha);
+  bd.photoSketchDirty = true;
+}
+let renderQueued = false;
+function queueRender() {
+  if (renderQueued) return;
+  renderQueued = true; $('#ph-busy').hidden = false;
+  setTimeout(() => requestAnimationFrame(() => {
+    renderQueued = false;
+    try { renderSketch(); } catch (e) { toast('העיבוד נכשל. נסי תמונה קטנה יותר.', 'err'); }
+    $('#ph-busy').hidden = true;
+  }), 40);
+}
+function syncControls() {
+  $$('#ph-style button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === ph.style)));
+  $$('.ctl[data-for]').forEach(c => { c.hidden = !c.dataset.for.split(' ').includes(ph.style); });
+  $('#l-thick').textContent = ph.style === 'dot' ? 'גודל נקודה' : 'עובי קו';
+  for (const k of ['detail', 'strength', 'contrast', 'clean', 'thick']) {
+    const v = +$('#ph-' + k).value; $('#o-' + k).textContent = k === 'contrast' && v > 0 ? '+' + v : String(v);
+  }
+}
+$$('#ph-style button').forEach(b => b.addEventListener('click', () => { ph.style = b.dataset.v; ls.set('sbt.style', ph.style); syncControls(); queueRender(); }));
+$$('#v-photo input[type=range]').forEach(r => r.addEventListener('input', () => { syncControls(); queueRender(); }));
+$$('#ph-mirror,#ph-alpha').forEach(r => r.addEventListener('change', queueRender));
+async function pickPhoto(file) {
+  if (!file) return;
+  try { const im = await loadImage(file); setPhotoSource(toCanvas(im, WORK), false); }
+  catch { toast('לא הצלחתי לפתוח את התמונה. נסי צילום מסך שלה או קובץ JPG.', 'err'); }
+}
+$('#in-camera').addEventListener('change', e => { pickPhoto(e.target.files[0]); e.target.value = ''; });
+$('#in-photo').addEventListener('change', e => { pickPhoto(e.target.files[0]); e.target.value = ''; });
+// Hold to compare with the original
+(() => {
+  const st = $('#ph-stage'), oc = $('#ph-orig'); let t;
+  const show = () => { if (ph.src) oc.hidden = false; };
+  const hide = () => { clearTimeout(t); oc.hidden = true; };
+  st.addEventListener('pointerdown', () => { t = setTimeout(show, 120); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => st.addEventListener(ev, hide));
+  st.addEventListener('contextmenu', e => e.preventDefault());
+})();
+$('#ph-save').addEventListener('click', async () => {
+  const b = await canvasBlob($('#ph-canvas'));
+  await gallery.add(b, 'photo', styleName(ph.style));
+  toast('נשמר בגלריה');
+});
+$('#ph-export').addEventListener('click', async () => {
+  const b = await canvasBlob($('#ph-canvas'));
+  exportBlob(b, `shaked-sketch-${stamp()}.png`);
+});
+$('#ph-tobody').addEventListener('click', () => { useSketchInBody({ kind: 'photo' }); showTab('body'); });
+const styleName = v => ({ pencil: 'עיפרון', line: 'קו נקי', stencil: 'סטנסיל', dot: 'דוטוורק' }[v] || v);
+
+/* Sample "photo": moonlit sea with music notes (drawn procedurally, so the app shows a working result on first open) */
+function makeSample() {
+  const W = 1000, H = 1250, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  let gr = x.createLinearGradient(0, 0, 0, H * 0.62); gr.addColorStop(0, '#2a3442'); gr.addColorStop(1, '#d9ccb2');
+  x.fillStyle = gr; x.fillRect(0, 0, W, H);
+  gr = x.createRadialGradient(660, 250, 10, 680, 270, 130); gr.addColorStop(0, '#fffaf0'); gr.addColorStop(1, '#d8c9a8');
+  x.fillStyle = gr; x.beginPath(); x.arc(680, 270, 120, 0, Math.PI * 2); x.fill();
+  x.fillStyle = 'rgba(120,110,95,.35)';
+  [[640, 240, 22], [720, 300, 16], [690, 210, 10], [650, 320, 12]].forEach(([a, b, r]) => { x.beginPath(); x.arc(a, b, r, 0, Math.PI * 2); x.fill(); });
+  x.fillStyle = '#1d2026'; x.strokeStyle = '#1d2026'; x.lineWidth = 9; x.lineCap = 'round';
+  const note = (nx, ny, sc, beam) => {
+    x.save(); x.translate(nx, ny); x.scale(sc, sc); x.rotate(-0.18);
+    x.beginPath(); x.ellipse(0, 0, 26, 18, -0.4, 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.moveTo(23, -6); x.lineTo(23, -120); x.stroke();
+    if (beam) { x.beginPath(); x.ellipse(90, -14, 26, 18, -0.4, 0, Math.PI * 2); x.fill(); x.beginPath(); x.moveTo(113, -20); x.lineTo(113, -134); x.stroke(); x.lineWidth = 16; x.beginPath(); x.moveTo(23, -116); x.lineTo(113, -130); x.stroke(); x.lineWidth = 9; }
+    else { x.beginPath(); x.moveTo(23, -120); x.quadraticCurveTo(70, -90, 50, -40); x.stroke(); }
+    x.restore();
+  };
+  note(190, 330, 1, true); note(420, 200, 0.75, false); note(300, 520, 0.6, false);
+  x.lineWidth = 5; x.beginPath(); x.moveTo(820, 470); x.quadraticCurveTo(845, 450, 870, 470); x.quadraticCurveTo(895, 450, 920, 470); x.stroke();
+  const layers = ['#3f5f78', '#34526a', '#2a455b', '#203a4d', '#183041', '#112634'];
+  layers.forEach((col, i) => {
+    const y0 = H * 0.6 + i * 85, A = 26 + i * 6, f = 0.010 - i * 0.0008, ph0 = i * 1.7;
+    x.beginPath(); x.moveTo(0, H);
+    for (let px = 0; px <= W; px += 8) x.lineTo(px, y0 + A * Math.sin(px * f + ph0) + 10 * Math.sin(px * f * 3.1 + ph0));
+    x.lineTo(W, H); x.closePath(); x.fillStyle = col; x.fill();
+    x.strokeStyle = '#e9eef0'; x.lineWidth = 6 - i * 0.6; x.beginPath();
+    for (let px = 0; px <= W; px += 8) { const py = y0 + A * Math.sin(px * f + ph0) + 10 * Math.sin(px * f * 3.1 + ph0); px ? x.lineTo(px, py) : x.moveTo(px, py); }
+    x.stroke();
+  });
+  x.strokeStyle = '#eef3f5'; x.lineWidth = 14; x.beginPath(); x.moveTo(60, 820); x.bezierCurveTo(120, 640, 360, 640, 380, 760); x.bezierCurveTo(390, 830, 300, 850, 280, 790); x.stroke();
+  return c;
+}
+
+/* ---------- Gallery (IndexedDB, this device only) ---------- */
+const gallery = (() => {
+  let dbp = null; const mem = [];
+  function open() {
+    if (dbp) return dbp;
+    dbp = new Promise((res) => {
+      try {
+        const r = indexedDB.open('sbt-studio', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('sketches', { keyPath: 'id' });
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => res(null);
+      } catch { res(null); }
+    });
+    return dbp;
+  }
+  const tx = async (mode, fn) => {
+    const db = await open(); if (!db) return null;
+    return new Promise((res) => {
+      try { const t = db.transaction('sketches', mode); const out = fn(t.objectStore('sketches')); t.oncomplete = () => res(out && out.result !== undefined ? out.result : true); t.onerror = () => res(null); }
+      catch { res(null); }
+    });
+  };
+  return {
+    async add(blob, source, label) {
+      const item = { id: Date.now() + '-' + Math.random().toString(36).slice(2, 7), created: Date.now(), source, label, blob };
+      const ok = await tx('readwrite', s => s.put(item));
+      if (!ok) mem.push(item);
+      return item;
+    },
+    async list() {
+      const all = await tx('readonly', s => s.getAll());
+      return [...(all || []), ...mem].sort((a, b) => b.created - a.created);
+    },
+    async remove(id) {
+      await tx('readwrite', s => s.delete(id));
+      const i = mem.findIndex(m => m.id === id); if (i >= 0) mem.splice(i, 1);
+    },
+    async wipe() {
+      mem.length = 0;
+      const db = await open(); if (db) db.close(); dbp = null;
+      await new Promise(res => { try { const r = indexedDB.deleteDatabase('sbt-studio'); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch { res(); } });
+    },
+  };
+})();
+let galUrls = [];
+async function renderGallery() {
+  const items = await gallery.list();
+  galUrls.forEach(u => URL.revokeObjectURL(u)); galUrls = [];
+  const grid = $('#gal-grid'); grid.textContent = '';
+  $('#gal-empty').hidden = items.length > 0;
+  for (const it of items) {
+    const u = URL.createObjectURL(it.blob); galUrls.push(u);
+    const b = document.createElement('button');
+    b.setAttribute('aria-label', it.label || 'סקיצה');
+    const im = document.createElement('img'); im.src = u; im.alt = ''; im.loading = 'lazy';
+    b.append(im); b.addEventListener('click', () => openViewer(it));
+    grid.append(b);
+  }
+}
+
+/* ---------- Viewer / export ---------- */
+let viewerItem = null, viewerUrl = null, delArmed = false;
+function openViewer(item, opts = {}) {
+  viewerItem = item; delArmed = false;
+  if (viewerUrl) URL.revokeObjectURL(viewerUrl);
+  viewerUrl = URL.createObjectURL(item.blob);
+  $('#vw-img').src = viewerUrl;
+  $('#vw-title').textContent = item.label || 'סקיצה';
+  $('#vw-del').textContent = 'מחיקה';
+  $('#vw-del').hidden = !item.created || opts.hintOnly;
+  $('#vw-acts').hidden = !!opts.hintOnly;
+  $('#viewer').hidden = false;
+}
+function closeViewer() { $('#viewer').hidden = true; }
+$('#vw-close').addEventListener('click', closeViewer);
+$('#viewer').addEventListener('click', e => { if (e.target.id === 'viewer') closeViewer(); });
+$('#vw-export').addEventListener('click', () => viewerItem && exportBlob(viewerItem.blob, `shaked-sketch-${stamp()}.png`));
+$('#vw-body').addEventListener('click', () => { if (!viewerItem) return; useSketchInBody({ kind: 'blob', item: viewerItem }); closeViewer(); showTab('body'); });
+$('#vw-stencil').addEventListener('click', async () => {
+  if (!viewerItem) return;
+  const im = await loadImage(viewerItem.blob);
+  ph.style = 'stencil'; syncControls(); setPhotoSource(toCanvas(im, WORK), false);
+  closeViewer(); showTab('photo'); toast('נטען למסך תמונה לסקיצה');
+});
+$('#vw-del').addEventListener('click', async () => {
+  if (!viewerItem) return;
+  if (!delArmed) { delArmed = true; $('#vw-del').textContent = 'לחיצה נוספת למחיקה'; return; }
+  await gallery.remove(viewerItem.id); closeViewer(); renderGallery(); toast('נמחק');
+});
+async function exportBlob(blob, name) {
+  if (caps.downloads) {
+    try { await caps.downloads.save({ filename: name, data: blob }); toast('נשמר'); return; }
+    catch (e) { if (e && e.code === 'declined') return; }
+  }
+  try {
+    const file = new File([blob], name, { type: blob.type || 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'Shaked Berkovich Tattoo' });
+      return;
+    }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  openViewer({ blob, label: 'שמירה לתמונות' }, { hintOnly: true });
+}
+
+/* ---------- Idea → sketch ---------- */
+const STYLES = [
+  { id: 'fine', he: 'Fine Line', en: 'fine-line tattoo: single-needle thin delicate lines, very light minimal shading' },
+  { id: 'trad', he: 'Traditional', en: 'American traditional flash: bold even outlines, simple solid black fills, iconic readable shapes' },
+  { id: 'black', he: 'Blackwork', en: 'blackwork: bold solid black areas, strong negative space, graphic and high contrast' },
+  { id: 'real', he: 'ריאליזם', en: 'black-and-grey realism sketch: confident outlines with soft hatching and stippled shading' },
+  { id: 'mini', he: 'מינימליסטי', en: 'minimalist: few clean continuous lines, lots of empty space, elegant' },
+  { id: 'jap', he: 'יפני', en: 'Japanese irezumi line drawing: flowing wind bars and waves, bold outlines' },
+  { id: 'geo', he: 'גיאומטרי', en: 'geometric: precise lines, sacred geometry, symmetry, small dot accents' },
+  { id: 'dot', he: 'דוטוורק', en: 'dotwork: stippled dot shading with clean outlines' },
+  { id: 'orn', he: 'אורנמנטלי', en: 'ornamental: filigree, mandala and lace patterns, symmetric' },
+];
+const PLACES = [
+  { id: 'arm', he: 'אמה', en: 'forearm (tall, narrow composition)', ar: '9:16' },
+  { id: 'upper', he: 'זרוע', en: 'upper arm', ar: '3:4' },
+  { id: 'shoulder', he: 'כתף', en: 'shoulder (rounded composition)', ar: '1:1' },
+  { id: 'back', he: 'גב', en: 'back (large piece)', ar: '3:4' },
+  { id: 'ribs', he: 'צלעות', en: 'ribs (tall flowing composition)', ar: '9:16' },
+  { id: 'chest', he: 'חזה', en: 'chest (wide symmetric composition)', ar: '4:3' },
+  { id: 'leg', he: 'רגל', en: 'calf or thigh', ar: '9:16' },
+  { id: 'small', he: 'קטן', en: 'small spot like the wrist, ankle or finger (very simple, few lines)', ar: '1:1' },
+];
+const EXAMPLES = ['מוזיקה וים: גל שמתפרק לתווים', 'פרפר שהכנפיים שלו פרחים', 'אריה עם כתר, מבט רגוע', 'ענף זית ויונה קטנה', 'שעון חול ובתוכו ים וירח'];
+const idea = { style: ls.get('sbt.istyle') || 'fine', place: ls.get('sbt.place') || 'arm', count: 2, engine: 'gemini', ref: null, refUrl: null, ctl: null, results: [] };
+function chip(text, pressed, onClick, cls = '') {
+  const b = document.createElement('button'); b.className = 'chip ' + cls; b.type = 'button'; b.textContent = text;
+  if (pressed !== null) b.setAttribute('aria-pressed', String(pressed));
+  b.addEventListener('click', onClick); return b;
+}
+function renderIdeaChips() {
+  const ex = $('#id-examples'); ex.textContent = '';
+  EXAMPLES.forEach(t => ex.append(chip(t, null, () => { $('#id-text').value = t; $('#id-text').focus(); }, 'ex')));
+  const st = $('#id-styles'); st.textContent = '';
+  STYLES.forEach(s => st.append(chip(s.he, s.id === idea.style, () => { idea.style = s.id; ls.set('sbt.istyle', s.id); renderIdeaChips(); })));
+  const pl = $('#id-places'); pl.textContent = '';
+  PLACES.forEach(p => pl.append(chip(p.he, p.id === idea.place, () => { idea.place = p.id; ls.set('sbt.place', p.id); renderIdeaChips(); })));
+}
+$$('#id-count button').forEach(b => b.addEventListener('click', () => { idea.count = +b.dataset.v; $$('#id-count button').forEach(x => x.setAttribute('aria-checked', String(x === b))); }));
+$$('#id-engine button').forEach(b => b.addEventListener('click', () => { idea.engine = b.dataset.v; ls.set('sbt.engine', idea.engine); refreshEngine(); }));
+function refreshEngine() {
+  const hasClaude = !!caps.sample;
+  $('#id-engine-wrap').hidden = !hasClaude;
+  if (!hasClaude) idea.engine = 'gemini';
+  else if (!ls.get('sbt.engine') && !getKey()) idea.engine = 'claude';
+  else if (ls.get('sbt.engine')) idea.engine = ls.get('sbt.engine');
+  $$('#id-engine button').forEach(x => x.setAttribute('aria-checked', String(x.dataset.v === idea.engine)));
+  $('#id-keynote').hidden = !(idea.engine === 'gemini' && !getKey());
+}
+$('#id-ref').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const im = await loadImage(f);
+    // Re-encode through a canvas: shrinks the upload and strips EXIF/GPS metadata
+    idea.ref = await canvasBlob(toCanvas(im, 1024), 'image/jpeg', 0.88);
+    if (idea.refUrl) URL.revokeObjectURL(idea.refUrl);
+    idea.refUrl = URL.createObjectURL(idea.ref);
+    $('#id-ref-img').src = idea.refUrl; $('#id-ref-img').hidden = false; $('#id-ref-x').hidden = false; $('#id-ref-l').textContent = 'החלפה';
+  } catch { toast('לא הצלחתי לפתוח את התמונה', 'err'); }
+});
+$('#id-ref-x').addEventListener('click', () => {
+  idea.ref = null; $('#id-ref-img').hidden = true; $('#id-ref-x').hidden = true; $('#id-ref-l').textContent = 'הוספת תמונה';
+});
+$('#id-open-settings').addEventListener('click', openSettings);
+
+function buildPrompt(text, variant, total) {
+  const st = STYLES.find(s => s.id === idea.style), pl = PLACES.find(p => p.id === idea.place);
+  return [
+    'Create an original, professional tattoo design sketch (tattoo flash / stencil-ready line drawing).',
+    `Concept from the tattoo artist (may be written in Hebrew; interpret its meaning): "${text}"`,
+    `Style: ${st.en}.`,
+    `Placement: ${pl.en}.`,
+    idea.ref ? 'Use the attached image only as visual reference for the subject; redraw it as a tattoo design.' : '',
+    'Requirements: crisp black ink linework on a pure white background, high contrast, no colour, no skin, no body or arm mockup, no frame, no watermark, no signature, centred composition with clean margins, lines that transfer cleanly to stencil paper.',
+    'Do not add any lettering or words unless the concept explicitly asks for text.',
+    total > 1 ? `This is variation ${variant} of ${total}: give it a clearly different composition from the others.` : '',
+  ].filter(Boolean).join('\n');
+}
+function getKey() { return idea.keyMem || ls.get('sbt.key') || ''; }
+function getModel() {
+  const m = ls.get('sbt.model') || 'gemini-2.5-flash-image';
+  return m.replace(/[^a-zA-Z0-9._-]/g, '');
+}
+async function geminiImage(prompt, aspect, signal, withAspect = true) {
+  const parts = [{ text: prompt }];
+  if (idea.ref) parts.push({ inline_data: { mime_type: 'image/jpeg', data: await blobToB64(idea.ref) } });
+  const body = { contents: [{ role: 'user', parts }], generationConfig: { responseModalities: ['TEXT', 'IMAGE'] } };
+  if (withAspect) body.generationConfig.imageConfig = { aspectRatio: aspect };
+  let r;
+  try {
+    r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${getModel()}:generateContent`, {
+      method: 'POST', signal, referrerPolicy: 'no-referrer', credentials: 'omit',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': getKey() },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw e;
+    throw { he: inViewer ? 'הגרסה שנפתחת בתוך Claude לא יכולה להתחבר ל-Gemini. בחרי במנוע Claude, או פתחי את גרסת האתר של האפליקציה.' : 'אין חיבור לאינטרנט, או ש-Google לא זמין כרגע.' };
+  }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const msg = (j.error && j.error.message) || '';
+    if (r.status === 400 && withAspect && /imageConfig|aspect/i.test(msg)) return geminiImage(prompt, aspect, signal, false);
+    if (r.status === 400 && /API key/i.test(msg)) throw { he: 'המפתח לא תקין. בדקי אותו בהגדרות.' };
+    if (r.status === 403) throw { he: 'למפתח אין הרשאה למודל הזה. ודאי שהמפתח נוצר ב-Google AI Studio.' };
+    if (r.status === 404) throw { he: 'המודל לא נמצא. בחרי מודל אחר בהגדרות.' };
+    if (r.status === 429) throw { he: 'נגמרה המכסה החינמית. אפשר לנסות שוב מאוחר יותר, או להפעיל חיוב (Billing) ב-Google AI Studio.' };
+    throw { he: `Google החזיר שגיאה (${r.status}). ${msg.slice(0, 140)}` };
+  }
+  const cand = (j.candidates || [])[0];
+  const parts2 = (cand && cand.content && cand.content.parts) || [];
+  const p = parts2.find(x => x.inlineData || x.inline_data);
+  if (!p) {
+    const reason = (cand && cand.finishReason) || (j.promptFeedback && j.promptFeedback.blockReason) || '';
+    throw { he: /SAFETY|BLOCK|PROHIBITED/i.test(reason) ? 'Google חסם את הבקשה מסיבות תוכן. נסי לנסח אחרת.' : 'לא התקבלה תמונה. נסי שוב או נסחי אחרת.' };
+  }
+  const d = p.inlineData || p.inline_data;
+  return b64ToBlob(d.data, d.mimeType || d.mime_type || 'image/png');
+}
+function sanitizeSvg(text) {
+  const m = text.match(/<svg[\s\S]*<\/svg>/i); if (!m) return null;
+  const doc = new DOMParser().parseFromString(m[0], 'image/svg+xml');
+  const svg = doc.documentElement; if (!svg || svg.nodeName.toLowerCase() !== 'svg' || doc.querySelector('parsererror')) return null;
+  doc.querySelectorAll('script,foreignObject,image,iframe,audio,video,a,style').forEach(n => n.remove());
+  doc.querySelectorAll('*').forEach(n => {
+    for (const a of Array.from(n.attributes)) {
+      const nm = a.name.toLowerCase(), v = a.value.trim().toLowerCase();
+      if (nm.startsWith('on') || ((nm === 'href' || nm === 'xlink:href') && !v.startsWith('#')) || v.includes('url(http') || v.includes('javascript:')) n.removeAttribute(a.name);
+    }
+  });
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  return new XMLSerializer().serializeToString(svg);
+}
+async function claudeImage(prompt, aspect, signal) {
+  const [aw, ah] = aspect.split(':').map(Number), W = 1024, H = Math.round(1024 * ah / aw);
+  const ask = prompt + `\n\nDraw it yourself as SVG. Reply with only one complete <svg> element, nothing else: viewBox="0 0 ${W} ${H}", width="${W}" height="${H}", a white background <rect>, then the artwork using only black (#111) strokes and fills, stroke-linecap and stroke-linejoin round, varied line weights like a real tattoo artist's pen. Make it detailed, elegant and well composed, with smooth bezier curves. No <text>, no <image>, no <script>, no external references, no CSS. Keep it under 60,000 characters.`;
+  let res;
+  try { res = await caps.sample(ask, { modelTier: 'complex', signal, cache: false, images: idea.ref ? [idea.ref] : undefined }); }
+  catch (e) {
+    if (e && e.code === 'cancelled') throw { name: 'AbortError' };
+    const map = { not_granted: 'לא אושר שימוש ב-Claude בעמוד הזה.', rate_limited: 'יותר מדי בקשות. נסי שוב בעוד כמה דקות.', refused: 'Claude לא יכול לצייר את זה. נסי לנסח אחרת.', images_unavailable: 'אי אפשר לשלוח תמונת השראה כאן. הסירי אותה ונסי שוב.', session_expired: 'צריך להתחבר מחדש ל-Claude.' };
+    throw { he: map[e && e.code] || 'הציור עם Claude נכשל. נסי שוב.' };
+  }
+  const svg = sanitizeSvg(res.text || '');
+  if (!svg) throw { he: 'הציור לא התקבל בשלמותו. נסי שוב.' };
+  const im = await loadImage(new Blob([svg], { type: 'image/svg+xml' }));
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.drawImage(im, 0, 0, W, H);
+  return canvasBlob(c);
+}
+function setBusy(on, text) {
+  $('#id-go').disabled = on; $('#id-stop').hidden = !on;
+  $('#id-status').hidden = !on; $('#id-status-t').textContent = text || '';
+}
+$('#id-go').addEventListener('click', async () => {
+  const text = $('#id-text').value.trim();
+  $('#id-err').hidden = true;
+  if (!text) { $('#id-text').focus(); toast('כתבי קודם את הרעיון'); return; }
+  if (idea.engine === 'gemini' && !getKey()) { openSettings(); return; }
+  const total = idea.engine === 'claude' ? Math.min(idea.count, 2) : idea.count;
+  const aspect = PLACES.find(p => p.id === idea.place).ar;
+  idea.ctl = new AbortController();
+  setBusy(true, idea.engine === 'claude' ? 'Claude מצייר… זה לוקח כחצי דקה עד דקה' : `מציירת ${total} גרסאות…`);
+  const jobs = [];
+  for (let i = 1; i <= total; i++) {
+    const p = buildPrompt(text, i, total);
+    jobs.push((idea.engine === 'claude' ? claudeImage : geminiImage)(p, aspect, idea.ctl.signal).then(blob => addResult(blob, text)));
+  }
+  const out = await Promise.allSettled(jobs);
+  setBusy(false);
+  const fails = out.filter(o => o.status === 'rejected').map(o => o.reason).filter(r => !(r && r.name === 'AbortError'));
+  if (fails.length) { $('#id-err').textContent = (fails[0] && fails[0].he) || 'משהו השתבש. נסי שוב.'; $('#id-err').hidden = false; }
+});
+$('#id-stop').addEventListener('click', () => idea.ctl && idea.ctl.abort());
+function addResult(blob, text) {
+  const item = { blob, label: text.slice(0, 40), url: URL.createObjectURL(blob) };
+  idea.results.unshift(item);
+  const card = document.createElement('div'); card.className = 'card';
+  const im = document.createElement('img'); im.src = item.url; im.alt = text;
+  im.addEventListener('click', () => openViewer({ blob, label: item.label }));
+  const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = item.label;
+  const acts = document.createElement('div'); acts.className = 'acts';
+  const mk = (t, fn, g) => { const b = document.createElement('button'); b.textContent = t; if (g) b.className = 'g'; b.addEventListener('click', fn); acts.append(b); return b; };
+  const sv = mk('שמירה', async () => { await gallery.add(blob, 'idea', item.label); sv.textContent = 'נשמר ✓'; sv.disabled = true; }, true);
+  mk('הדמיה', () => { useSketchInBody({ kind: 'blob', item }); showTab('body'); });
+  mk('לסטנסיל', async () => { const i2 = await loadImage(blob); ph.style = 'stencil'; syncControls(); setPhotoSource(toCanvas(i2, WORK), false); showTab('photo'); });
+  mk('שיתוף', () => exportBlob(blob, `shaked-idea-${stamp()}.png`));
+  card.append(im, meta, acts);
+  $('#id-results').prepend(card);
+}
+
+/* ---------- Body preview ---------- */
+const bd = { photo: null, isSample: true, inkSrc: null, ink: null, x: 0.5, y: 0.47, scale: 0.42, rot: -0.12, opacity: 0.88, mirror: false, healed: true, sel: 'photo', photoSketchDirty: true };
+function makeArm() {
+  const W = 900, H = 1200, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  let g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#24201b'); g.addColorStop(1, '#0f0d0b');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.save(); x.translate(W / 2, H / 2); x.rotate(-0.12);
+  g = x.createLinearGradient(-260, 0, 260, 0);
+  g.addColorStop(0, '#8e5d45'); g.addColorStop(0.18, '#c58f70'); g.addColorStop(0.5, '#e2b293'); g.addColorStop(0.82, '#c08869'); g.addColorStop(1, '#7d503b');
+  x.fillStyle = g; x.beginPath();
+  x.moveTo(-235, -700); x.bezierCurveTo(-250, -200, -215, 300, -175, 700); x.lineTo(175, 700); x.bezierCurveTo(215, 300, 250, -200, 235, -700); x.closePath(); x.fill();
+  const hl = x.createLinearGradient(-60, 0, 80, 0); hl.addColorStop(0, 'rgba(255,235,220,0)'); hl.addColorStop(0.5, 'rgba(255,235,220,.16)'); hl.addColorStop(1, 'rgba(255,235,220,0)');
+  x.fillStyle = hl; x.fillRect(-60, -700, 140, 1400);
+  x.restore();
+  return c;
+}
+function buildInk() {
+  const src = bd.inkSrc; if (!src) { bd.ink = null; return; }
+  const c = toCanvas(src, 1200), w = c.width, h = c.height, ctx = c.getContext('2d');
+  const id = ctx.getImageData(0, 0, w, h), d = id.data;
+  const tint = bd.healed ? [32, 38, 48] : [8, 8, 10];
+  for (let o = 0; o < d.length; o += 4) {
+    const lum = (0.299 * d[o] + 0.587 * d[o + 1] + 0.114 * d[o + 2]) / 255;
+    const a = clamp01((1 - lum) * 1.15) * 255;
+    d[o] = tint[0]; d[o + 1] = tint[1]; d[o + 2] = tint[2]; d[o + 3] = a;
+  }
+  ctx.putImageData(id, 0, 0);
+  bd.ink = c;
+}
+function drawBody() {
+  const cv = $('#bd-canvas');
+  if (!bd.photo) bd.photo = makeArm();
+  if (bd.sel === 'photo' && bd.photoSketchDirty) { const c = $('#ph-canvas'); if (c.width > 10) { bd.inkSrc = c; buildInk(); bd.photoSketchDirty = false; } }
+  const W = bd.photo.width, H = bd.photo.height;
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  const x = cv.getContext('2d');
+  x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1;
+  x.drawImage(bd.photo, 0, 0, W, H);
+  if (!bd.ink) return;
+  x.save();
+  x.globalCompositeOperation = 'multiply'; x.globalAlpha = bd.opacity;
+  if (bd.healed) x.filter = `blur(${Math.max(0.4, W / 1400).toFixed(2)}px)`;
+  x.translate(bd.x * W, bd.y * H); x.rotate(bd.rot); if (bd.mirror) x.scale(-1, 1);
+  const sw = bd.scale * W, sh = sw * bd.ink.height / bd.ink.width;
+  x.drawImage(bd.ink, -sw / 2, -sh / 2, sw, sh);
+  x.restore();
+  x.filter = 'none';
+  $('#bd-tag').hidden = !bd.isSample;
+}
+function syncBodyCtl() {
+  $('#bd-size').value = Math.round(bd.scale * 100); $('#o-size').textContent = Math.round(bd.scale * 100) + '%';
+  const deg = Math.round(bd.rot * 180 / Math.PI); $('#bd-rot').value = deg; $('#o-rot').textContent = deg + '°';
+  $('#bd-op').value = Math.round(bd.opacity * 100); $('#o-op').textContent = Math.round(bd.opacity * 100) + '%';
+}
+async function useSketchInBody(ref) {
+  if (ref.kind === 'photo') { bd.sel = 'photo'; bd.photoSketchDirty = true; }
+  else { bd.sel = ref.item.id || ref.item.url; bd.inkSrc = await loadImage(ref.item.blob); buildInk(); }
+  drawBody(); renderBodyPicker();
+}
+let stripUrls = [];
+async function renderBodyPicker() {
+  const strip = $('#bd-strip'); strip.textContent = '';
+  stripUrls.forEach(u => URL.revokeObjectURL(u)); stripUrls = [];
+  const add = (src, key, onPick, label) => {
+    const b = document.createElement('button'); b.setAttribute('aria-pressed', String(bd.sel === key)); b.setAttribute('aria-label', label);
+    const im = document.createElement('img'); im.src = src; im.alt = ''; b.append(im);
+    b.addEventListener('click', onPick); strip.append(b);
+  };
+  const pc = $('#ph-canvas');
+  if (pc.width > 10) add(pc.toDataURL('image/jpeg', 0.6), 'photo', () => useSketchInBody({ kind: 'photo' }), 'הסקיצה מהתמונה');
+  for (const r of idea.results) add(r.url, r.url, () => useSketchInBody({ kind: 'blob', item: r }), r.label);
+  for (const it of await gallery.list()) {
+    if (it.source === 'body') continue;
+    const u = URL.createObjectURL(it.blob); stripUrls.push(u);
+    add(u, it.id, () => useSketchInBody({ kind: 'blob', item: it }), it.label || 'סקיצה');
+  }
+}
+async function pickBody(file) {
+  if (!file) return;
+  try { const im = await loadImage(file); bd.photo = toCanvas(im, 1600); bd.isSample = false; drawBody(); }
+  catch { toast('לא הצלחתי לפתוח את התמונה', 'err'); }
+}
+$('#bd-cam').addEventListener('change', e => { pickBody(e.target.files[0]); e.target.value = ''; });
+$('#bd-file').addEventListener('change', e => { pickBody(e.target.files[0]); e.target.value = ''; });
+$('#bd-size').addEventListener('input', e => { bd.scale = e.target.value / 100; syncBodyCtl(); drawBody(); });
+$('#bd-rot').addEventListener('input', e => { bd.rot = e.target.value * Math.PI / 180; syncBodyCtl(); drawBody(); });
+$('#bd-op').addEventListener('input', e => { bd.opacity = e.target.value / 100; syncBodyCtl(); drawBody(); });
+$('#bd-mirror').addEventListener('change', e => { bd.mirror = e.target.checked; drawBody(); });
+$('#bd-healed').addEventListener('change', e => { bd.healed = e.target.checked; buildInk(); drawBody(); });
+(() => {
+  const cv = $('#bd-canvas'), pts = new Map(); let g0 = null;
+  const pos = e => ({ x: e.clientX, y: e.clientY });
+  const begin = () => { g0 = { x: bd.x, y: bd.y, scale: bd.scale, rot: bd.rot, pts: [...pts.values()].map(p => ({ ...p })) }; };
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, pos(e)); begin(); });
+  cv.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId) || !g0) return;
+    pts.set(e.pointerId, pos(e));
+    const r = cv.getBoundingClientRect(), a = [...pts.values()], b = g0.pts;
+    if (a.length === 1 && b.length === 1) {
+      bd.x = clamp(g0.x + (a[0].x - b[0].x) / r.width, -0.2, 1.2);
+      bd.y = clamp(g0.y + (a[0].y - b[0].y) / r.height, -0.2, 1.2);
+    } else if (a.length >= 2 && b.length >= 2) {
+      const d0 = Math.hypot(b[1].x - b[0].x, b[1].y - b[0].y) || 1, d1 = Math.hypot(a[1].x - a[0].x, a[1].y - a[0].y);
+      bd.scale = clamp(g0.scale * d1 / d0, 0.05, 1.5);
+      bd.rot = g0.rot + Math.atan2(a[1].y - a[0].y, a[1].x - a[0].x) - Math.atan2(b[1].y - b[0].y, b[1].x - b[0].x);
+      bd.rot = Math.atan2(Math.sin(bd.rot), Math.cos(bd.rot));
+      bd.x = clamp(g0.x + ((a[0].x + a[1].x) - (b[0].x + b[1].x)) / 2 / r.width, -0.2, 1.2);
+      bd.y = clamp(g0.y + ((a[0].y + a[1].y) - (b[0].y + b[1].y)) / 2 / r.height, -0.2, 1.2);
+    }
+    syncBodyCtl(); drawBody();
+  });
+  const end = e => { pts.delete(e.pointerId); begin(); };
+  cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+})();
+$('#bd-save').addEventListener('click', async () => { const b = await canvasBlob($('#bd-canvas'), 'image/jpeg', 0.92); await gallery.add(b, 'body', 'הדמיה'); toast('נשמר בגלריה'); });
+$('#bd-export').addEventListener('click', async () => { const b = await canvasBlob($('#bd-canvas'), 'image/jpeg', 0.92); exportBlob(b, `shaked-preview-${stamp()}.jpg`); });
+
+/* ---------- Settings ---------- */
+function openSettings() {
+  $('#st-key').value = getKey();
+  $('#st-remember').checked = ls.get('sbt.remember') !== '0';
+  const m = ls.get('sbt.model') || 'gemini-2.5-flash-image';
+  const known = $$('#st-model option').some(o => o.value === m);
+  $('#st-model').value = known ? m : 'custom';
+  $('#st-model-custom').hidden = known; $('#st-model-custom').value = known ? '' : m;
+  $('#st-msg').hidden = true; $('#st-wipe').textContent = 'מחיקת המפתח וכל הגלריה'; wipeArmed = false;
+  $('#settings').hidden = false;
+}
+function closeSettings() { $('#settings').hidden = true; refreshEngine(); }
+function stMsg(t, kind = '') { const m = $('#st-msg'); m.textContent = t; m.className = 'note ' + kind; m.hidden = false; }
+$('#btn-settings').addEventListener('click', openSettings);
+$('#st-close').addEventListener('click', closeSettings);
+$('#settings').addEventListener('click', e => { if (e.target.id === 'settings') closeSettings(); });
+$('#st-show').addEventListener('click', () => { const k = $('#st-key'); const show = k.type === 'password'; k.type = show ? 'text' : 'password'; $('#st-show').textContent = show ? 'הסתרה' : 'הצגה'; });
+$('#st-model').addEventListener('change', e => {
+  const custom = e.target.value === 'custom'; $('#st-model-custom').hidden = !custom;
+  if (!custom) ls.set('sbt.model', e.target.value);
+});
+$('#st-model-custom').addEventListener('change', e => { const v = e.target.value.trim(); if (v) ls.set('sbt.model', v); });
+function saveKey() {
+  const k = $('#st-key').value.trim().replace(/\s+/g, '');
+  const remember = $('#st-remember').checked;
+  ls.set('sbt.remember', remember ? '1' : '0');
+  idea.keyMem = k;
+  if (remember && k) ls.set('sbt.key', k); else ls.del('sbt.key');
+  return k;
+}
+$('#st-save').addEventListener('click', () => { const k = saveKey(); stMsg(k ? 'נשמר. אפשר לחזור ולצייר.' : 'המפתח נמחק.'); refreshEngine(); });
+$('#st-test').addEventListener('click', async () => {
+  const k = saveKey(); if (!k) { stMsg('הדביקי קודם מפתח.', 'err'); return; }
+  stMsg('בודקת…');
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=50', { headers: { 'x-goog-api-key': k }, referrerPolicy: 'no-referrer', credentials: 'omit' });
+    if (r.ok) stMsg('המפתח עובד ✓', ''); else if (r.status === 400 || r.status === 403) stMsg('המפתח לא תקין. העתיקי אותו שוב מ-Google AI Studio.', 'err'); else stMsg('Google החזיר שגיאה ' + r.status, 'err');
+  } catch { stMsg(inViewer ? 'בתוך Claude אין חיבור ל-Google. בגרסת האתר זה יעבוד.' : 'אין חיבור לאינטרנט.', 'err'); }
+});
+let wipeArmed = false;
+$('#st-wipe').addEventListener('click', async () => {
+  if (!wipeArmed) { wipeArmed = true; $('#st-wipe').textContent = 'לחיצה נוספת תמחק הכול'; return; }
+  ['sbt.key', 'sbt.model', 'sbt.remember', 'sbt.engine', 'sbt.style', 'sbt.istyle', 'sbt.place', 'sbt.tab'].forEach(k => ls.del(k));
+  idea.keyMem = ''; $('#st-key').value = '';
+  await gallery.wipe(); renderGallery();
+  stMsg('כל הנתונים נמחקו מהמכשיר.'); wipeArmed = false; $('#st-wipe').textContent = 'מחיקת המפתח וכל הגלריה';
+});
+
+/* ---------- Tabs & boot ---------- */
+function showTab(name) {
+  $$('.view').forEach(v => { v.hidden = v.id !== 'v-' + name; });
+  $$('.tab').forEach(b => b.setAttribute('aria-current', b.dataset.tab === name ? 'page' : 'false'));
+  ls.set('sbt.tab', name);
+  if (name === 'gallery') renderGallery();
+  if (name === 'body') { renderBodyPicker(); syncBodyCtl(); drawBody(); }
+  if (name === 'idea') refreshEngine();
+  window.scrollTo(0, 0);
+}
+$$('.tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeViewer(); closeSettings(); } });
+
+idea.keyMem = '';
+renderIdeaChips();
+syncControls();
+setPhotoSource(makeSample(), true);
+refreshEngine();
+const startTab = ls.get('sbt.tab');
+showTab(['photo', 'idea', 'body', 'gallery'].includes(startTab) ? startTab : 'photo');
+})();
+</script>
+</body>
+</html>
