@@ -82,7 +82,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .busy{position:absolute;inset-inline-end:10px;top:10px;width:26px;height:26px;border-radius:50%;border:2px solid rgba(201,162,75,.25);border-top-color:var(--gold);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.seg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;padding:4px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
 .seg button{border:0;background:transparent;border-radius:10px;min-height:42px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;padding:0 4px}
 .seg button[aria-checked="true"]{background:var(--panel-2);color:var(--gold-hi);box-shadow:inset 0 0 0 1px var(--gold-lo)}
 .seg.two{grid-template-columns:repeat(2,1fr)}
@@ -226,13 +226,15 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         <button role="radio" data-v="line" aria-checked="true">קו נקי</button>
         <button role="radio" data-v="stencil" aria-checked="false">סטנסיל</button>
         <button role="radio" data-v="dot" aria-checked="false">דוטוורק</button>
+        <button role="radio" data-v="ink" aria-checked="false">דיו</button>
       </div>
+      <p class="hint" id="ph-ink-hint" hidden>דיו שומר על הקווים של ציור קיים (סקיצת AI או ציור סרוק), מנקה ומעבה אותם.</p>
       <div class="panel">
-        <div class="ctl" data-for="pencil line stencil dot"><label for="ph-detail">רמת פירוט <output id="o-detail"></output></label><input type="range" id="ph-detail" min="1" max="10" step="1" value="6"></div>
-        <div class="ctl" data-for="pencil line stencil dot"><label for="ph-strength">עוצמת קו <output id="o-strength"></output></label><input type="range" id="ph-strength" min="1" max="10" step="1" value="5"></div>
+        <div class="ctl" data-for="pencil line stencil dot ink"><label for="ph-detail">רמת פירוט <output id="o-detail"></output></label><input type="range" id="ph-detail" min="1" max="10" step="1" value="6"></div>
+        <div class="ctl" data-for="pencil line stencil dot ink"><label for="ph-strength">עוצמת קו <output id="o-strength"></output></label><input type="range" id="ph-strength" min="1" max="10" step="1" value="5"></div>
         <div class="ctl" data-for="pencil dot"><label for="ph-contrast">ניגודיות <output id="o-contrast"></output></label><input type="range" id="ph-contrast" min="-5" max="5" step="1" value="0"></div>
-        <div class="ctl" data-for="line stencil dot"><label for="ph-clean">ניקוי רעשים <output id="o-clean"></output></label><input type="range" id="ph-clean" min="0" max="10" step="1" value="4"></div>
-        <div class="ctl" data-for="line stencil dot"><label for="ph-thick"><span id="l-thick">עובי קו</span> <output id="o-thick"></output></label><input type="range" id="ph-thick" min="0" max="4" step="1" value="1"></div>
+        <div class="ctl" data-for="line stencil dot ink"><label for="ph-clean">ניקוי רעשים <output id="o-clean"></output></label><input type="range" id="ph-clean" min="0" max="10" step="1" value="4"></div>
+        <div class="ctl" data-for="line stencil dot ink"><label for="ph-thick"><span id="l-thick">עובי קו</span> <output id="o-thick"></output></label><input type="range" id="ph-thick" min="0" max="4" step="1" value="1"></div>
       </div>
       <div class="toggles">
         <label class="tog"><input type="checkbox" id="ph-mirror">היפוך מראה</label>
@@ -286,6 +288,7 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
       </div>
       <div class="status" id="id-status" hidden><span class="dot"></span><span id="id-status-t"></span></div>
       <div class="note err" id="id-err" hidden></div>
+      <div class="label" id="id-res-label" hidden>התוצאות: לחיצה על תמונה מגדילה אותה</div>
       <div class="results" id="id-results"></div>
     </section>
 
@@ -351,7 +354,7 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
       <div class="row" id="vw-acts">
         <button class="btn btn-gold" id="vw-export">שמירה לטלפון</button>
         <button class="btn" id="vw-body">הדמיה על הגוף</button>
-        <button class="btn" id="vw-stencil">המרה לסטנסיל</button>
+        <button class="btn" id="vw-stencil">עריכה</button>
         <button class="btn btn-danger" id="vw-del">מחיקה</button>
       </div>
     </div>
@@ -449,7 +452,8 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
           <li>לנייר טרנספר מסמנים "היפוך מראה" לפני השמירה.</li>
           <li>"רקע שקוף" שומר PNG שאפשר לפתוח ב-Procreate מעל שכבות אחרות.</li>
           <li>כדי לקבל סקיצה של AI מתמונה: "שיפור עם AI" במסך התמונה, ואז "יצירת סקיצה".</li>
-          <li>תוצאה מהרעיון אפשר להמיר לסטנסיל בלחיצה על "לסטנסיל".</li>
+          <li>התוצאות של הרעיון מופיעות מתחת לכפתור "יצירת סקיצה". מתחת לכל תוצאה יש כפתורים: שמירה, הדמיה, עריכה ושיתוף.</li>
+          <li>"עריכה" פותחת את הסקיצה במסך התמונה בסגנון דיו. שם אפשר לנקות, לעבות, להפוך לסטנסיל ולהפוך מראה.</li>
         </ul>
       </div>
       <div class="sec">
@@ -631,6 +635,15 @@ function lineInk(g, w, h, s, P, hard) {
   }
   return ink;
 }
+function inkKeep(g, w, h, s, P) {
+  const src = P.detail < 10 ? gauss(g, w, h, (10 - P.detail) * 0.18 * s) : g;
+  const t = 0.35 + P.strength * 0.05, n = g.length;
+  let ink = new Float32Array(n);
+  for (let i = 0; i < n; i++) ink[i] = smooth(clamp01((t - src[i]) / 0.14 + 0.5));
+  if (P.clean > 0) removeSpecks(ink, w, h, Math.round(P.clean * P.clean * 2.4 * s * s));
+  if (P.thick > 0) ink = dilate(ink, w, h, Math.round(P.thick * s));
+  return ink;
+}
 function pencilLight(g, w, h, s, P) {
   const n = g.length, inv = new Float32Array(n);
   for (let i = 0; i < n; i++) inv[i] = 1 - g[i];
@@ -712,6 +725,7 @@ function renderSketch() {
   let ink = null, light = null;
   if (ph.style === 'pencil') light = pencilLight(g, w, h, s, P);
   else if (ph.style === 'dot') ink = dotInk(g, w, h, s, P);
+  else if (ph.style === 'ink') ink = inkKeep(g, w, h, s, P);
   else ink = lineInk(g, w, h, s, P, ph.style === 'stencil');
   const c = $('#ph-canvas'); c.width = w; c.height = h;
   const ctx = c.getContext('2d'), id = ctx.createImageData(w, h), d = id.data;
@@ -741,6 +755,7 @@ function syncControls() {
   $$('#ph-style button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.v === ph.style)));
   $$('.ctl[data-for]').forEach(c => { c.hidden = !c.dataset.for.split(' ').includes(ph.style); });
   $('#l-thick').textContent = ph.style === 'dot' ? 'גודל נקודה' : 'עובי קו';
+  $('#ph-ink-hint').hidden = ph.style !== 'ink';
   for (const k of ['detail', 'strength', 'contrast', 'clean', 'thick']) {
     const v = +$('#ph-' + k).value; $('#o-' + k).textContent = k === 'contrast' && v > 0 ? '+' + v : String(v);
   }
@@ -780,7 +795,7 @@ $('#ph-toai').addEventListener('click', async () => {
   if (!$('#id-text').value.trim()) $('#id-text').value = 'הפכי את התמונה המצורפת לסקיצת קעקוע נקייה, ושמרי על הדמות והפרטים החשובים';
   showTab('idea'); toast('התמונה צורפה כהשראה');
 });
-const styleName = v => ({ pencil: 'עיפרון', line: 'קו נקי', stencil: 'סטנסיל', dot: 'דוטוורק' }[v] || v);
+const styleName = v => ({ pencil: 'עיפרון', line: 'קו נקי', stencil: 'סטנסיל', dot: 'דוטוורק', ink: 'דיו' }[v] || v);
 
 /* Sample "photo": moonlit sea with music notes (drawn procedurally, so the app shows a working result on first open) */
 function makeSample() {
@@ -898,8 +913,7 @@ $('#vw-body').addEventListener('click', () => { if (!viewerItem) return; useSket
 $('#vw-stencil').addEventListener('click', async () => {
   if (!viewerItem) return;
   const im = await loadImage(viewerItem.blob);
-  ph.style = 'stencil'; syncControls(); setPhotoSource(toCanvas(im, WORK), false);
-  closeViewer(); showTab('photo'); toast('נטען למסך תמונה לסקיצה');
+  editDrawing(im); closeViewer();
 });
 $('#vw-del').addEventListener('click', async () => {
   if (!viewerItem) return;
@@ -1073,6 +1087,10 @@ async function claudeImage(prompt, aspect, signal) {
   const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, W, H); x.drawImage(im, 0, 0, W, H);
   return canvasBlob(c);
 }
+function editDrawing(im) {
+  ph.style = 'ink'; syncControls(); setPhotoSource(toCanvas(im, WORK), false);
+  showTab('photo'); toast('נפתח לעריכה. אפשר לשנות סגנון, לנקות ולעבות קווים');
+}
 function setBusy(on, text) {
   $('#id-go').disabled = on; $('#id-stop').hidden = !on;
   $('#id-status').hidden = !on; $('#id-status-t').textContent = text || '';
@@ -1093,6 +1111,7 @@ $('#id-go').addEventListener('click', async () => {
   }
   const out = await Promise.allSettled(jobs);
   setBusy(false);
+  if (out.some(o => o.status === 'fulfilled')) $('#id-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   const fails = out.filter(o => o.status === 'rejected').map(o => o.reason).filter(r => !(r && r.name === 'AbortError'));
   if (fails.length) { $('#id-err').textContent = (fails[0] && fails[0].he) || 'משהו השתבש. נסי שוב.'; $('#id-err').hidden = false; }
 });
@@ -1108,10 +1127,11 @@ function addResult(blob, text) {
   const mk = (t, fn, g) => { const b = document.createElement('button'); b.textContent = t; if (g) b.className = 'g'; b.addEventListener('click', fn); acts.append(b); return b; };
   const sv = mk('שמירה', async () => { await gallery.add(blob, 'idea', item.label); sv.textContent = 'נשמר ✓'; sv.disabled = true; }, true);
   mk('הדמיה', () => { useSketchInBody({ kind: 'blob', item }); showTab('body'); });
-  mk('לסטנסיל', async () => { const i2 = await loadImage(blob); ph.style = 'stencil'; syncControls(); setPhotoSource(toCanvas(i2, WORK), false); showTab('photo'); });
+  mk('עריכה', async () => editDrawing(await loadImage(blob)));
   mk('שיתוף', () => exportBlob(blob, `shaked-idea-${stamp()}.png`));
   card.append(im, meta, acts);
   $('#id-results').prepend(card);
+  $('#id-res-label').hidden = false;
 }
 
 /* ---------- Body preview ---------- */
