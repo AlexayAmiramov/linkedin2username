@@ -133,6 +133,8 @@ textarea::placeholder,.field::placeholder{color:#6f6656}
 .card .acts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border-top:1px solid var(--line)}
 .card .acts button{border:0;background:var(--panel);min-height:40px;font-size:13px;cursor:pointer;color:var(--fg)}
 .card .acts button.g{color:var(--gold-hi)}
+.card{position:relative}
+.card .rm{position:absolute;top:8px;inset-inline-end:8px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:rgba(12,11,9,.8);color:var(--fg);font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center}
 .card .meta{font-size:11px;color:var(--muted);padding:6px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* Body preview */
@@ -329,9 +331,11 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
         <input type="file" id="bd-cam" accept="image/*" capture="environment" hidden>
         <input type="file" id="bd-file" accept="image/*" hidden>
       </div>
+      <div class="label">על איזה איבר</div>
+      <div class="chips" id="bd-parts"></div>
       <div class="stage" style="background:#111">
         <canvas id="bd-canvas" width="10" height="10" aria-label="הדמיה"></canvas>
-        <span class="tag" id="bd-tag">הדמיה לדוגמה</span>
+        <span class="tag" id="bd-tag">תבנית: אמה</span>
       </div>
       <div class="label">איזו סקיצה</div>
       <div class="strip" id="bd-strip"></div>
@@ -809,11 +813,28 @@ function syncControls() {
   }
 }
 $$('#ph-style button').forEach(b => b.addEventListener('click', () => { ph.style = b.dataset.v; ls.set('sbt.style', ph.style); syncControls(); queueRender(); }));
-$$('#v-photo input[type=range]').forEach(r => r.addEventListener('input', () => { syncControls(); queueRender(); }));
-$$('#ph-mirror,#ph-alpha').forEach(r => r.addEventListener('change', queueRender));
+const PH_KEYS = ['detail', 'strength', 'contrast', 'clean', 'thick'];
+function saveParams() {
+  const o = {}; PH_KEYS.forEach(k => { o[k] = +$('#ph-' + k).value; });
+  o.mirror = $('#ph-mirror').checked; o.alpha = $('#ph-alpha').checked;
+  ls.set('sbt.params', JSON.stringify(o));
+}
+function loadParams() {
+  try {
+    const o = JSON.parse(ls.get('sbt.params') || 'null'); if (!o) return;
+    PH_KEYS.forEach(k => { if (typeof o[k] === 'number') $('#ph-' + k).value = o[k]; });
+    $('#ph-mirror').checked = !!o.mirror; $('#ph-alpha').checked = !!o.alpha;
+  } catch {}
+}
+$$('#v-photo input[type=range]').forEach(r => r.addEventListener('input', () => { syncControls(); queueRender(); saveParams(); }));
+$$('#ph-mirror,#ph-alpha').forEach(r => r.addEventListener('change', () => { queueRender(); saveParams(); }));
+// The photo being worked on is kept on the device, so a refresh or reopening the app continues from it
+async function rememberPhoto(canvas, type) {
+  try { await kv.set('photoSrc', await canvasBlob(canvas, type, 0.93)); } catch {}
+}
 async function pickPhoto(file) {
   if (!file) return;
-  try { const im = await loadImage(file); setPhotoSource(toCanvas(im, WORK), false); }
+  try { const im = await loadImage(file); const c = toCanvas(im, WORK); setPhotoSource(c, false); rememberPhoto(c, 'image/jpeg'); }
   catch { toast('לא הצלחתי לפתוח את התמונה. נסי צילום מסך שלה או קובץ JPG.', 'err'); }
 }
 $('#in-camera').addEventListener('change', e => { pickPhoto(e.target.files[0]); e.target.value = ''; });
@@ -880,48 +901,65 @@ function makeSample() {
   return c;
 }
 
-/* ---------- Gallery (IndexedDB, this device only) ---------- */
-const gallery = (() => {
-  let dbp = null; const mem = [];
+/* ---------- Storage (IndexedDB, this device only) ---------- */
+const idb = (() => {
+  let dbp = null;
   function open() {
     if (dbp) return dbp;
     dbp = new Promise((res) => {
       try {
-        const r = indexedDB.open('sbt-studio', 1);
-        r.onupgradeneeded = () => r.result.createObjectStore('sketches', { keyPath: 'id' });
+        const r = indexedDB.open('sbt-studio', 2);
+        r.onupgradeneeded = () => {
+          const db = r.result;
+          for (const n of ['sketches', 'results']) if (!db.objectStoreNames.contains(n)) db.createObjectStore(n, { keyPath: 'id' });
+          if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+        };
         r.onsuccess = () => res(r.result);
         r.onerror = () => res(null);
       } catch { res(null); }
     });
     return dbp;
   }
-  const tx = async (mode, fn) => {
+  async function run(store, mode, fn) {
     const db = await open(); if (!db) return null;
     return new Promise((res) => {
-      try { const t = db.transaction('sketches', mode); const out = fn(t.objectStore('sketches')); t.oncomplete = () => res(out && out.result !== undefined ? out.result : true); t.onerror = () => res(null); }
-      catch { res(null); }
+      try {
+        const t = db.transaction(store, mode); const req = fn(t.objectStore(store));
+        t.oncomplete = () => res(req && req.result !== undefined ? req.result : (mode === 'readwrite' ? true : null));
+        t.onerror = t.onabort = () => res(null);
+      } catch { res(null); }
     });
-  };
+  }
+  async function wipe() {
+    const db = await open(); if (db) db.close(); dbp = null;
+    await new Promise(res => { try { const r = indexedDB.deleteDatabase('sbt-studio'); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch { res(); } });
+  }
+  return { run, wipe };
+})();
+const kv = {
+  get: k => idb.run('kv', 'readonly', s => s.get(k)),
+  set: (k, v) => idb.run('kv', 'readwrite', s => s.put(v, k)),
+  del: k => idb.run('kv', 'readwrite', s => s.delete(k)),
+};
+const newId = () => Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+const gallery = (() => {
+  const mem = [];
   return {
     async add(blob, source, label) {
-      const item = { id: Date.now() + '-' + Math.random().toString(36).slice(2, 7), created: Date.now(), source, label, blob };
-      const ok = await tx('readwrite', s => s.put(item));
+      const item = { id: newId(), created: Date.now(), source, label, blob };
+      const ok = await idb.run('sketches', 'readwrite', s => s.put(item));
       if (!ok) mem.push(item);
       return item;
     },
     async list() {
-      const all = await tx('readonly', s => s.getAll());
+      const all = await idb.run('sketches', 'readonly', s => s.getAll());
       return [...(all || []), ...mem].sort((a, b) => b.created - a.created);
     },
     async remove(id) {
-      await tx('readwrite', s => s.delete(id));
+      await idb.run('sketches', 'readwrite', s => s.delete(id));
       const i = mem.findIndex(m => m.id === id); if (i >= 0) mem.splice(i, 1);
     },
-    async wipe() {
-      mem.length = 0;
-      const db = await open(); if (db) db.close(); dbp = null;
-      await new Promise(res => { try { const r = indexedDB.deleteDatabase('sbt-studio'); r.onsuccess = r.onerror = r.onblocked = () => res(); } catch { res(); } });
-    },
+    async wipe() { mem.length = 0; await idb.wipe(); },
   };
 })();
 let galUrls = [];
@@ -960,8 +998,7 @@ $('#vw-export').addEventListener('click', () => viewerItem && exportBlob(viewerI
 $('#vw-body').addEventListener('click', () => { if (!viewerItem) return; useSketchInBody({ kind: 'blob', item: viewerItem }); closeViewer(); showTab('body'); });
 $('#vw-stencil').addEventListener('click', async () => {
   if (!viewerItem) return;
-  const im = await loadImage(viewerItem.blob);
-  editDrawing(im); closeViewer();
+  editDrawing(await loadImage(viewerItem.blob)); closeViewer();
 });
 $('#vw-del').addEventListener('click', async () => {
   if (!viewerItem) return;
@@ -1143,7 +1180,8 @@ async function claudeImage(prompt, aspect, signal) {
   return canvasBlob(c);
 }
 function editDrawing(im) {
-  ph.style = 'ink'; syncControls(); setPhotoSource(toCanvas(im, WORK), false);
+  ph.style = 'ink'; ls.set('sbt.style', 'ink'); syncControls();
+  const c = toCanvas(im, WORK); setPhotoSource(c, false); rememberPhoto(c, 'image/png');
   showTab('photo'); toast('נפתח לעריכה. אפשר לשנות סגנון, לנקות ולעבות קווים');
 }
 // Copy synchronously inside the tap (works on iPhone), with the async clipboard API as a second try
@@ -1209,40 +1247,92 @@ $('#id-go').addEventListener('click', async () => {
   if (fails.length) { $('#id-err').textContent = (fails[0] && fails[0].he) || 'משהו השתבש. נסי שוב.'; $('#id-err').hidden = false; }
 });
 $('#id-stop').addEventListener('click', () => idea.ctl && idea.ctl.abort());
-function addResult(blob, text) {
-  const item = { blob, label: text.slice(0, 40), url: URL.createObjectURL(blob) };
+function addResult(blob, text, saved) {
+  const item = saved || { id: newId(), created: Date.now(), blob, label: text.slice(0, 40) };
+  if (!saved) idb.run('results', 'readwrite', s => s.put({ id: item.id, created: item.created, blob, label: item.label }));
+  item.url = URL.createObjectURL(blob);
   idea.results.unshift(item);
   const card = document.createElement('div'); card.className = 'card';
+  const rm = document.createElement('button'); rm.className = 'rm'; rm.type = 'button'; rm.textContent = '×'; rm.setAttribute('aria-label', 'הסרת התוצאה');
+  rm.addEventListener('click', () => {
+    idb.run('results', 'readwrite', s => s.delete(item.id));
+    const i = idea.results.indexOf(item); if (i >= 0) idea.results.splice(i, 1);
+    card.remove(); URL.revokeObjectURL(item.url);
+    $('#id-res-label').hidden = idea.results.length === 0;
+  });
   const im = document.createElement('img'); im.src = item.url; im.alt = text;
   im.addEventListener('click', () => openViewer({ blob, label: item.label }));
   const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = item.label;
   const acts = document.createElement('div'); acts.className = 'acts';
   const mk = (t, fn, g) => { const b = document.createElement('button'); b.textContent = t; if (g) b.className = 'g'; b.addEventListener('click', fn); acts.append(b); return b; };
   const sv = mk('שמירה', async () => { await gallery.add(blob, 'idea', item.label); sv.textContent = 'נשמר ✓'; sv.disabled = true; }, true);
-  mk('הדמיה', () => { useSketchInBody({ kind: 'blob', item }); showTab('body'); });
+  mk('הדמיה', () => { if (bd.part !== 'mine') selectBody(PLACE_TO_PART[idea.place] || bd.part); useSketchInBody({ kind: 'blob', item }); showTab('body'); });
   mk('עריכה', async () => editDrawing(await loadImage(blob)));
   mk('שיתוף', () => exportBlob(blob, `shaked-idea-${stamp()}.png`));
-  card.append(im, meta, acts);
+  card.append(im, rm, meta, acts);
   $('#id-results').prepend(card);
   $('#id-res-label').hidden = false;
 }
 
 /* ---------- Body preview ---------- */
-const bd = { photo: null, isSample: true, inkSrc: null, ink: null, x: 0.5, y: 0.47, scale: 0.42, rot: -0.12, opacity: 0.88, mirror: false, healed: true, sel: 'photo', photoSketchDirty: true };
-function makeArm() {
+const bd = { photo: null, part: ls.get('sbt.body') || 'arm', userPhoto: null, inkSrc: null, ink: null, x: 0.5, y: 0.47, scale: 0.42, rot: 0, opacity: 0.88, mirror: false, healed: true, sel: 'photo', photoSketchDirty: true };
+/* Built-in body parts, drawn on the device. Each sets where a sketch starts on it. */
+function skin(shape, opt) {
   const W = 900, H = 1200, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
   let g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#24201b'); g.addColorStop(1, '#0f0d0b');
   x.fillStyle = g; x.fillRect(0, 0, W, H);
-  x.save(); x.translate(W / 2, H / 2); x.rotate(-0.12);
-  g = x.createLinearGradient(-260, 0, 260, 0);
-  g.addColorStop(0, '#8e5d45'); g.addColorStop(0.18, '#c58f70'); g.addColorStop(0.5, '#e2b293'); g.addColorStop(0.82, '#c08869'); g.addColorStop(1, '#7d503b');
-  x.fillStyle = g; x.beginPath();
-  x.moveTo(-235, -700); x.bezierCurveTo(-250, -200, -215, 300, -175, 700); x.lineTo(175, 700); x.bezierCurveTo(215, 300, 250, -200, 235, -700); x.closePath(); x.fill();
-  const hl = x.createLinearGradient(-60, 0, 80, 0); hl.addColorStop(0, 'rgba(255,235,220,0)'); hl.addColorStop(0.5, 'rgba(255,235,220,.16)'); hl.addColorStop(1, 'rgba(255,235,220,0)');
-  x.fillStyle = hl; x.fillRect(-60, -700, 140, 1400);
+  const path = new Path2D(); shape(path);
+  x.save();
+  x.shadowColor = 'rgba(0,0,0,.55)'; x.shadowBlur = 40; x.fillStyle = '#b98066'; x.fill(path);
+  x.restore();
+  x.save(); x.clip(path);
+  if (opt.radial) {
+    const [cx, cy, r] = opt.radial;
+    g = x.createRadialGradient(cx, cy, r * 0.1, cx, cy, r);
+    g.addColorStop(0, '#e6b797'); g.addColorStop(0.55, '#cf9a7a'); g.addColorStop(1, '#7d503b');
+  } else {
+    g = x.createLinearGradient(opt.l, 0, opt.r, 0);
+    g.addColorStop(0, '#87573f'); g.addColorStop(0.2, '#c58f70'); g.addColorStop(0.5, '#e3b494'); g.addColorStop(0.8, '#c08869'); g.addColorStop(1, '#7a4e3a');
+  }
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  if (opt.detail) opt.detail(x);
   x.restore();
   return c;
+}
+const shade = (x, f, a = 0.18, w = 26, col = '90,52,36') => { x.save(); x.strokeStyle = `rgba(${col},${a})`; x.lineWidth = w; x.lineCap = 'round'; x.filter = 'blur(14px)'; x.beginPath(); f(x); x.stroke(); x.restore(); };
+const glow = (x, cx, cy, r, a = 0.22) => { const g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, `rgba(255,236,220,${a})`); g.addColorStop(1, 'rgba(255,236,220,0)'); x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2); };
+function roundRect(p, x, y, w, h, r) { p.moveTo(x + r, y); p.arcTo(x + w, y, x + w, y + h, r); p.arcTo(x + w, y + h, x, y + h, r); p.arcTo(x, y + h, x, y, r); p.arcTo(x, y, x + w, y, r); p.closePath(); }
+const BODY_PARTS = [
+  { id: 'arm', he: 'אמה', pos: [0.5, 0.47, 0.42], draw: () => skin(p => { p.moveTo(210, 0); p.bezierCurveTo(190, 400, 230, 800, 285, 1200); p.lineTo(615, 1200); p.bezierCurveTo(670, 800, 710, 400, 690, 0); p.closePath(); }, { l: 200, r: 700, detail: x => { glow(x, 470, 420, 260, 0.16); shade(x, c => { c.moveTo(560, 80); c.bezierCurveTo(600, 400, 590, 800, 560, 1150); }, 0.12); } }) },
+  { id: 'upper', he: 'זרוע', pos: [0.5, 0.48, 0.44], draw: () => skin(p => { p.moveTo(190, 0); p.bezierCurveTo(140, 320, 170, 760, 250, 1200); p.lineTo(650, 1200); p.bezierCurveTo(700, 800, 770, 360, 710, 0); p.closePath(); }, { l: 160, r: 740, detail: x => { glow(x, 470, 520, 300, 0.2); shade(x, c => { c.moveTo(300, 900); c.quadraticCurveTo(450, 980, 600, 900); }, 0.14, 40); } }) },
+  { id: 'shoulder', he: 'כתף', pos: [0.5, 0.5, 0.44], draw: () => skin(p => { p.moveTo(0, 1200); p.lineTo(0, 560); p.bezierCurveTo(70, 340, 260, 230, 470, 235); p.bezierCurveTo(690, 240, 830, 370, 865, 580); p.bezierCurveTo(890, 760, 850, 980, 800, 1200); p.closePath(); }, { radial: [470, 560, 700], detail: x => { glow(x, 480, 470, 260, 0.22); shade(x, c => { c.moveTo(150, 700); c.bezierCurveTo(250, 860, 420, 980, 560, 1080); }, 0.14, 50); } }) },
+  { id: 'back', he: 'גב', pos: [0.5, 0.42, 0.5], draw: () => skin(p => { p.moveTo(110, 0); p.bezierCurveTo(165, 160, 150, 320, 170, 520); p.bezierCurveTo(190, 760, 150, 990, 140, 1200); p.lineTo(760, 1200); p.bezierCurveTo(750, 990, 710, 760, 730, 520); p.bezierCurveTo(750, 320, 735, 160, 790, 0); p.closePath(); }, { l: 120, r: 780, detail: x => { shade(x, c => { c.moveTo(450, 40); c.lineTo(450, 1180); }, 0.2, 18); shade(x, c => { c.moveTo(250, 220); c.quadraticCurveTo(300, 420, 390, 480); }, 0.16, 34); shade(x, c => { c.moveTo(650, 220); c.quadraticCurveTo(600, 420, 510, 480); }, 0.16, 34); } }) },
+  { id: 'ribs', he: 'צלעות', pos: [0.5, 0.5, 0.36], draw: () => skin(p => { p.moveTo(250, 0); p.bezierCurveTo(190, 320, 230, 720, 300, 1200); p.lineTo(700, 1200); p.bezierCurveTo(640, 780, 700, 340, 650, 0); p.closePath(); }, { l: 220, r: 700, detail: x => { for (let i = 0; i < 5; i++) shade(x, c => { const y = 300 + i * 120; c.moveTo(260, y); c.quadraticCurveTo(450, y + 60, 650, y - 10); }, 0.09, 20); glow(x, 470, 520, 280, 0.14); } }) },
+  { id: 'chest', he: 'חזה', pos: [0.5, 0.36, 0.42], draw: () => skin(p => { p.moveTo(40, 0); p.lineTo(860, 0); p.bezierCurveTo(880, 320, 830, 720, 770, 1200); p.lineTo(130, 1200); p.bezierCurveTo(70, 720, 20, 320, 40, 0); p.closePath(); }, { l: 40, r: 860, detail: x => { shade(x, c => { c.moveTo(120, 170); c.quadraticCurveTo(280, 120, 420, 190); }, 0.2, 20); shade(x, c => { c.moveTo(780, 170); c.quadraticCurveTo(620, 120, 480, 190); }, 0.2, 20); shade(x, c => { c.moveTo(450, 230); c.lineTo(450, 760); }, 0.12, 22); shade(x, c => { c.moveTo(150, 620); c.quadraticCurveTo(300, 720, 430, 650); }, 0.14, 40); shade(x, c => { c.moveTo(750, 620); c.quadraticCurveTo(600, 720, 470, 650); }, 0.14, 40); } }) },
+  { id: 'leg', he: 'רגל', pos: [0.5, 0.42, 0.32], draw: () => skin(p => { p.moveTo(290, 0); p.bezierCurveTo(220, 260, 210, 520, 275, 790); p.bezierCurveTo(315, 960, 335, 1100, 350, 1200); p.lineTo(560, 1200); p.bezierCurveTo(570, 1080, 600, 950, 635, 790); p.bezierCurveTo(695, 520, 690, 260, 620, 0); p.closePath(); }, { l: 220, r: 690, detail: x => { glow(x, 400, 430, 240, 0.2); shade(x, c => { c.moveTo(560, 120); c.bezierCurveTo(610, 400, 600, 700, 540, 1100); }, 0.12); } }) },
+  { id: 'hand', he: 'כף יד', pos: [0.48, 0.66, 0.26], draw: () => skin(p => {
+      p.moveTo(345, 1200); p.lineTo(345, 950); p.bezierCurveTo(300, 860, 268, 720, 282, 560); p.bezierCurveTo(300, 520, 620, 520, 640, 560); p.bezierCurveTo(655, 720, 628, 860, 585, 950); p.lineTo(585, 1200); p.closePath();
+      [[282, 250, 80], [370, 175, 82], [458, 200, 80], [546, 290, 76]].forEach(([fx, fy, fw]) => roundRect(p, fx, fy, fw, 610 - fy, fw / 2));
+      const t = new DOMMatrix().translate(600, 880).rotate(42); const th = new Path2D(); roundRect(th, -44, -300, 88, 340, 44); p.addPath(th, t);
+    }, { l: 260, r: 720, detail: x => { glow(x, 460, 700, 200, 0.18); [320, 410, 498, 584].forEach(k => shade(x, c => { c.moveTo(k - 14, 560); c.lineTo(k + 14, 560); }, 0.18, 16)); } }) },
+];
+const PLACE_TO_PART = { arm: 'arm', upper: 'upper', shoulder: 'shoulder', back: 'back', ribs: 'ribs', chest: 'chest', leg: 'leg', small: 'hand' };
+const partCache = {};
+function selectBody(id, keepPos) {
+  const part = BODY_PARTS.find(b => b.id === id);
+  if (id === 'mine' && bd.userPhoto) { bd.photo = bd.userPhoto; }
+  else if (part) { bd.photo = partCache[id] || (partCache[id] = part.draw()); if (!keepPos) { [bd.x, bd.y, bd.scale] = part.pos; bd.rot = 0; } }
+  else return selectBody('arm', keepPos);
+  bd.part = id; ls.set('sbt.body', id);
+  $('#bd-tag').textContent = part ? 'תבנית: ' + part.he : '';
+  $('#bd-tag').hidden = !part;
+  renderBodyParts(); syncBodyCtl(); drawBody();
+}
+function renderBodyParts() {
+  const box = $('#bd-parts'); box.textContent = '';
+  if (bd.userPhoto) box.append(chip('התמונה שלי', bd.part === 'mine', () => selectBody('mine')));
+  BODY_PARTS.forEach(b => box.append(chip(b.he, bd.part === b.id, () => selectBody(b.id))));
 }
 function buildInk() {
   const src = bd.inkSrc; if (!src) { bd.ink = null; return; }
@@ -1259,7 +1349,7 @@ function buildInk() {
 }
 function drawBody() {
   const cv = $('#bd-canvas');
-  if (!bd.photo) bd.photo = makeArm();
+  if (!bd.photo) { selectBody(bd.part); return; }
   if (bd.sel === 'photo' && bd.photoSketchDirty) { const c = $('#ph-canvas'); if (c.width > 10) { bd.inkSrc = c; buildInk(); bd.photoSketchDirty = false; } }
   const W = bd.photo.width, H = bd.photo.height;
   if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
@@ -1275,7 +1365,6 @@ function drawBody() {
   x.drawImage(bd.ink, -sw / 2, -sh / 2, sw, sh);
   x.restore();
   x.filter = 'none';
-  $('#bd-tag').hidden = !bd.isSample;
 }
 function syncBodyCtl() {
   $('#bd-size').value = Math.round(bd.scale * 100); $('#o-size').textContent = Math.round(bd.scale * 100) + '%';
@@ -1298,7 +1387,7 @@ async function renderBodyPicker() {
   };
   const pc = $('#ph-canvas');
   if (pc.width > 10) add(pc.toDataURL('image/jpeg', 0.6), 'photo', () => useSketchInBody({ kind: 'photo' }), 'הסקיצה מהתמונה');
-  for (const r of idea.results) add(r.url, r.url, () => useSketchInBody({ kind: 'blob', item: r }), r.label);
+  for (const r of idea.results) add(r.url, r.id, () => useSketchInBody({ kind: 'blob', item: r }), r.label);
   for (const it of await gallery.list()) {
     if (it.source === 'body') continue;
     const u = URL.createObjectURL(it.blob); stripUrls.push(u);
@@ -1307,7 +1396,11 @@ async function renderBodyPicker() {
 }
 async function pickBody(file) {
   if (!file) return;
-  try { const im = await loadImage(file); bd.photo = toCanvas(im, 1600); bd.isSample = false; drawBody(); }
+  try {
+    const im = await loadImage(file); bd.userPhoto = toCanvas(im, 1600);
+    selectBody('mine');
+    kv.set('bodyPhoto', await canvasBlob(bd.userPhoto, 'image/jpeg', 0.92));
+  }
   catch { toast('לא הצלחתי לפתוח את התמונה', 'err'); }
 }
 $('#bd-cam').addEventListener('change', e => { pickBody(e.target.files[0]); e.target.value = ''; });
@@ -1393,9 +1486,11 @@ $('#st-test').addEventListener('click', async () => {
 let wipeArmed = false;
 $('#st-wipe').addEventListener('click', async () => {
   if (!wipeArmed) { wipeArmed = true; $('#st-wipe').textContent = 'לחיצה נוספת תמחק הכול'; return; }
-  ['sbt.key', 'sbt.model', 'sbt.remember', 'sbt.engine', 'sbt.style', 'sbt.istyle', 'sbt.place', 'sbt.tab'].forEach(k => ls.del(k));
+  ['sbt.key', 'sbt.model', 'sbt.remember', 'sbt.engine', 'sbt.style', 'sbt.istyle', 'sbt.place', 'sbt.tab', 'sbt.params', 'sbt.body'].forEach(k => ls.del(k));
   idea.keyMem = ''; $('#st-key').value = '';
   await gallery.wipe(); renderGallery();
+  idea.results.forEach(r => URL.revokeObjectURL(r.url)); idea.results.length = 0; $('#id-results').textContent = ''; $('#id-res-label').hidden = true;
+  bd.userPhoto = null; selectBody('arm'); setPhotoSource(makeSample(), true);
   stMsg('כל הנתונים נמחקו מהמכשיר.'); wipeArmed = false; $('#st-wipe').textContent = 'מחיקת כל הנתונים והגלריה';
 });
 
@@ -1405,7 +1500,7 @@ function showTab(name) {
   $$('.tab').forEach(b => b.setAttribute('aria-current', b.dataset.tab === name ? 'page' : 'false'));
   ls.set('sbt.tab', name);
   if (name === 'gallery') renderGallery();
-  if (name === 'body') { renderBodyPicker(); syncBodyCtl(); drawBody(); }
+  if (name === 'body') { renderBodyPicker(); renderBodyParts(); syncBodyCtl(); drawBody(); }
   if (name === 'idea') refreshEngine();
   window.scrollTo(0, 0);
 }
@@ -1414,11 +1509,25 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeViewe
 
 idea.keyMem = '';
 renderIdeaChips();
+loadParams();
 syncControls();
-setPhotoSource(makeSample(), true);
 refreshEngine();
-const startTab = ls.get('sbt.tab');
-showTab(['photo', 'idea', 'body', 'gallery'].includes(startTab) ? startTab : 'photo');
+(async () => {
+  // Bring back the last photo, the idea results and the body photo saved on this device
+  let restored = false;
+  try { const b = await kv.get('photoSrc'); if (b) { setPhotoSource(toCanvas(await loadImage(b), WORK), false); restored = true; } } catch {}
+  if (!restored) setPhotoSource(makeSample(), true);
+  try {
+    const rs = (await idb.run('results', 'readonly', s => s.getAll())) || [];
+    rs.sort((a, b) => a.created - b.created);
+    for (const r of rs.slice(-40)) addResult(r.blob, r.label, { id: r.id, created: r.created, blob: r.blob, label: r.label });
+    for (const r of rs.slice(0, -40)) idb.run('results', 'readwrite', s => s.delete(r.id));
+  } catch {}
+  try { const b = await kv.get('bodyPhoto'); if (b) bd.userPhoto = toCanvas(await loadImage(b), 1600); } catch {}
+  if (bd.part === 'mine' && !bd.userPhoto) bd.part = 'arm';
+  const startTab = ls.get('sbt.tab');
+  showTab(['photo', 'idea', 'body', 'gallery'].includes(startTab) ? startTab : 'photo');
+})();
 })();
 </script>
 </body>
