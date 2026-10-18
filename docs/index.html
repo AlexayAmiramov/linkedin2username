@@ -215,6 +215,7 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
     </div>
   </header>
 
+  <div class="note warn" id="save-warn" hidden style="margin-top:14px"></div>
   <main>
     <!-- PHOTO → SKETCH -->
     <section id="v-photo" class="view">
@@ -1535,6 +1536,20 @@ renderIdeaChips();
 loadParams();
 syncControls();
 refreshEngine();
+// Check that this browser really keeps data, and warn when it does not
+(async () => {
+  if (navigator.storage && navigator.storage.persist) { try { await navigator.storage.persist(); } catch {} }
+  const w = $('#save-warn');
+  const probe = String(Date.now());
+  const ok = (await kv.set('probe', probe)) && (await kv.get('probe')) === probe;
+  if (!ok) {
+    w.textContent = 'הדפדפן הזה לא שומר נתונים, ולכן כל מה שתעשי יימחק ברענון. כנראה שזה מצב גלישה פרטית: פתחי את האתר בלשונית רגילה, או מהאייקון במסך הבית.';
+    w.hidden = false;
+  } else if (inViewer) {
+    w.textContent = 'בתוך הקישור של Claude הדפדפן יכול למחוק את העבודה ברענון. כדי שהכול יישמר, פתחי את האתר alexayamiramov.github.io/linkedin2username והוסיפי אותו למסך הבית.';
+    w.hidden = false;
+  }
+})();
 (async () => {
   // Bring back the last photo, the idea results and the body photo saved on this device
   let restored = false;

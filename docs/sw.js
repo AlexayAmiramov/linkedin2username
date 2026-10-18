@@ -1,6 +1,6 @@
 // Offline support: network first, cached copy when offline. Only same-origin GETs are touched,
 // so requests to Google's API never pass through or get stored in the cache.
-const CACHE = 'sbt-v8';
+const CACHE = 'sbt-v9';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -13,7 +13,8 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
   e.respondWith(
-    fetch(e.request)
+    // Revalidate with the server every time, so a new version shows up on the next open without a manual refresh
+    fetch(e.request, { cache: 'no-cache' })
       .then(r => { const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r; })
       .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
   );
