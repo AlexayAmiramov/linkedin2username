@@ -333,6 +333,12 @@ select.field{appearance:none;-webkit-appearance:none;direction:ltr;text-align:le
       </div>
       <div class="label">על איזה איבר</div>
       <div class="chips" id="bd-parts"></div>
+      <div class="row" id="bd-part-row">
+        <label class="btn btn-sm" for="bd-part-file"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg><span id="bd-part-l">תמונה אמיתית לאיבר הזה</span></label>
+        <button class="btn btn-sm btn-ghost" id="bd-part-reset" hidden>חזרה לציור</button>
+        <input type="file" id="bd-part-file" accept="image/*" hidden>
+      </div>
+      <p class="hint" id="bd-part-hint" style="text-align:start;margin:-6px 0 0">שומרים בטלפון תמונה מ-Pinterest או מגוגל, ובוחרים אותה כאן. היא נשארת התמונה הקבועה של האיבר הזה.</p>
       <div class="stage" style="background:#111">
         <canvas id="bd-canvas" width="10" height="10" aria-label="הדמיה"></canvas>
         <span class="tag" id="bd-tag">תבנית: אמה</span>
@@ -1275,7 +1281,7 @@ function addResult(blob, text, saved) {
 }
 
 /* ---------- Body preview ---------- */
-const bd = { photo: null, part: ls.get('sbt.body') || 'arm', userPhoto: null, inkSrc: null, ink: null, x: 0.5, y: 0.47, scale: 0.42, rot: 0, opacity: 0.88, mirror: false, healed: true, sel: 'photo', photoSketchDirty: true };
+const bd = { photo: null, part: ls.get('sbt.body') || 'arm', userPhoto: null, partPhotos: {}, inkSrc: null, ink: null, x: 0.5, y: 0.47, scale: 0.42, rot: 0, opacity: 0.88, mirror: false, healed: true, sel: 'photo', photoSketchDirty: true };
 /* Built-in body parts, drawn on the device. Each sets where a sketch starts on it. */
 function skin(shape, opt) {
   const W = 900, H = 1200, c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -1322,11 +1328,15 @@ const partCache = {};
 function selectBody(id, keepPos) {
   const part = BODY_PARTS.find(b => b.id === id);
   if (id === 'mine' && bd.userPhoto) { bd.photo = bd.userPhoto; }
-  else if (part) { bd.photo = partCache[id] || (partCache[id] = part.draw()); if (!keepPos) { [bd.x, bd.y, bd.scale] = part.pos; bd.rot = 0; } }
+  else if (part) { bd.photo = bd.partPhotos[id] || partCache[id] || (partCache[id] = part.draw()); if (!keepPos) { [bd.x, bd.y, bd.scale] = part.pos; bd.rot = 0; } }
   else return selectBody('arm', keepPos);
   bd.part = id; ls.set('sbt.body', id);
-  $('#bd-tag').textContent = part ? 'תבנית: ' + part.he : '';
+  const real = !!(part && bd.partPhotos[id]);
+  $('#bd-tag').textContent = part ? (real ? part.he : 'תבנית: ' + part.he) : '';
   $('#bd-tag').hidden = !part;
+  $('#bd-part-row').hidden = $('#bd-part-hint').hidden = !part;
+  $('#bd-part-reset').hidden = !real;
+  if (part) $('#bd-part-l').textContent = real ? 'החלפת התמונה של ' + part.he : 'תמונה אמיתית ל' + part.he;
   renderBodyParts(); syncBodyCtl(); drawBody();
 }
 function renderBodyParts() {
@@ -1404,6 +1414,19 @@ async function pickBody(file) {
   catch { toast('לא הצלחתי לפתוח את התמונה', 'err'); }
 }
 $('#bd-cam').addEventListener('change', e => { pickBody(e.target.files[0]); e.target.value = ''; });
+// A real photo can replace the drawn template of any body part, and stays on the device
+$('#bd-part-file').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; const id = bd.part; if (!f || id === 'mine') return;
+  try {
+    const c = toCanvas(await loadImage(f), 1600);
+    bd.partPhotos[id] = c; selectBody(id);
+    kv.set('part:' + id, await canvasBlob(c, 'image/jpeg', 0.92));
+    toast('התמונה נשמרה לאיבר הזה');
+  } catch { toast('לא הצלחתי לפתוח את התמונה', 'err'); }
+});
+$('#bd-part-reset').addEventListener('click', () => {
+  const id = bd.part; delete bd.partPhotos[id]; kv.del('part:' + id); selectBody(id);
+});
 $('#bd-file').addEventListener('change', e => { pickBody(e.target.files[0]); e.target.value = ''; });
 $('#bd-size').addEventListener('input', e => { bd.scale = e.target.value / 100; syncBodyCtl(); drawBody(); });
 $('#bd-rot').addEventListener('input', e => { bd.rot = e.target.value * Math.PI / 180; syncBodyCtl(); drawBody(); });
@@ -1490,7 +1513,7 @@ $('#st-wipe').addEventListener('click', async () => {
   idea.keyMem = ''; $('#st-key').value = '';
   await gallery.wipe(); renderGallery();
   idea.results.forEach(r => URL.revokeObjectURL(r.url)); idea.results.length = 0; $('#id-results').textContent = ''; $('#id-res-label').hidden = true;
-  bd.userPhoto = null; selectBody('arm'); setPhotoSource(makeSample(), true);
+  bd.userPhoto = null; bd.partPhotos = {}; selectBody('arm'); setPhotoSource(makeSample(), true);
   stMsg('כל הנתונים נמחקו מהמכשיר.'); wipeArmed = false; $('#st-wipe').textContent = 'מחיקת כל הנתונים והגלריה';
 });
 
@@ -1524,6 +1547,9 @@ refreshEngine();
     for (const r of rs.slice(0, -40)) idb.run('results', 'readwrite', s => s.delete(r.id));
   } catch {}
   try { const b = await kv.get('bodyPhoto'); if (b) bd.userPhoto = toCanvas(await loadImage(b), 1600); } catch {}
+  for (const part of BODY_PARTS) {
+    try { const b = await kv.get('part:' + part.id); if (b) bd.partPhotos[part.id] = toCanvas(await loadImage(b), 1600); } catch {}
+  }
   if (bd.part === 'mine' && !bd.userPhoto) bd.part = 'arm';
   const startTab = ls.get('sbt.tab');
   showTab(['photo', 'idea', 'body', 'gallery'].includes(startTab) ? startTab : 'photo');
